@@ -321,7 +321,12 @@ print.mp_power <- function(x, ...) {
     cli::cli_text('N_Between = {x$sim$n_between}')
     cli::cli_h3('lme4 Model Syntax')
     cli::cli_text('')
-    cli::cli_text(deparse(to_formula(x$parameters)))
+    # Handle only one icc case
+    if (is.null(names(x$power))) {
+        cli::cli_text(deparse(to_formula(x$mean_parameters)))
+    } else {
+        cli::cli_text(deparse(to_formula(x$mean_parameters[[1]])))
+    }
     cli::cli_text('')
     cli::cli_alert_info('cwc() = centering within cluster')
     cli::cli_alert_info('cgm() = centering with grand mean')

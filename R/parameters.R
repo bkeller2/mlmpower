@@ -321,8 +321,6 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
     n_l1 <- NROW(x$mean_X)
     n_l2 <- NROW(x$mean_W)
 
-    # TODO deal with timevars
-
     # Determine which predictors are CGM
     # NOTE Assumes always same regression coefficient means cgm
     cgm_sel <- gammas[seq_len(n_l1) + 1] == gammas[seq_len(n_l1) + (1 + n_l1 + n_l1 * n_l2)]
