@@ -162,23 +162,6 @@ new_parameters <- function(model) {
         }
         gamma_w <- c(gamma_X_w, gamma_XW_w)
 
-        # compute the random effect correlation matrix
-        cor_raneffects <- matrix(1, nrow = num_X + 1, ncol = num_X + 1)
-        corvec <- corr_raneffects((num_X + 1) * ((num_X + 1) - 1) / 2)
-        corindex <- matrix(seq_len((num_X + 1) * (num_X + 1)), nrow = num_X + 1, ncol = num_X + 1)
-        cor_raneffects[corindex[upper.tri(corindex)]] <- corvec
-        cor_raneffects[lower.tri(cor_raneffects)] <- t(cor_raneffects)[lower.tri(t(cor_raneffects))]
-
-        # solve for the random slope variances
-        cor_ranslopes <- cor_raneffects[-1, -1, drop = F]
-        tau_trace <- (var_Y * R2_ranslopes_w) / sum(diagonal(cor_ranslopes %*% phi_XX_w %*% diagonal(weights_ranslopes_w)))
-        var_ranslopes <- weights_ranslopes_w * tau_trace
-        if (length(var_ranslopes) == 1) {
-            tau_ranslopes <- var_ranslopes
-        } else {
-            tau_ranslopes <- diagonal(sqrt(var_ranslopes)) %*% cor_ranslopes %*% diagonal(sqrt(var_ranslopes))
-        }
-
         # compute the within-cluster residual variance
         var_e_w <- (1 - icc_Y - R2_X_w - R2_XWproduct_w - R2_ranslopes_w) * var_Y
 
@@ -206,16 +189,26 @@ new_parameters <- function(model) {
             weights_scaled[sel_weight] <- 1 / sqrt(diagonal(phi_b)[sel_weight]) * weights_increment_b[sel_weight]
             gamma_b <- weights_scaled * c(sqrt((var_Y * R2_increment_b) / t(weights_scaled) %*% phi_b %*% weights_scaled))
         }
+        # Replace NaN with 0
+        gamma_b[is.na(gamma_b)] <- 0
 
-        # compute random intercept variance
+        # compute the random effect correlation matrix
+        cor_raneffects <- matrix(1, nrow = num_X + 1, ncol = num_X + 1)
+        corvec <- corr_raneffects((num_X + 1) * ((num_X + 1) - 1) / 2)
+        cor_raneffects[upper.tri(cor_raneffects)] <- cor_raneffects[lower.tri(cor_raneffects)] <- corvec
+
+        # solve for the random slope variances
+        cor_ranslopes <- cor_raneffects[-1, -1, drop = F]
+        tau_trace <- (var_Y * R2_ranslopes_w) / sum(diagonal(cor_ranslopes %*% phi_XX_w %*% diagonal(weights_ranslopes_w)))
+        var_ranslopes <- if (is.finite(tau_trace)) weights_ranslopes_w * tau_trace else 0.0
+
         # vector of correlations between random intercept and slopes
         cor_is <- cor_raneffects[-1, 1, drop = F]
+
         # covariance matrix of just the random slopes
-        if (num_X == 1) {
-            tau_ranslopes <- var_ranslopes
-        } else {
-            tau_ranslopes <- diagonal(sqrt(c(var_ranslopes))) %*% cor_raneffects[-1, -1, drop = F] %*% diagonal(sqrt(c(var_ranslopes)))
-        }
+        tau_ranslopes <- diagonal(sqrt(c(var_ranslopes))) %*% cor_raneffects[-1, -1, drop = F] %*% diagonal(sqrt(c(var_ranslopes)))
+
+        # compute random intercept variance
         # explained level-2 variation
         b <- t(gamma_b) %*% phi_b %*% gamma_b
         # random intercept variation due to non-zero level-1 means
