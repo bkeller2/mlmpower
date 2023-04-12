@@ -318,7 +318,11 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
         var_l1[x$timevar_l1] <- names(x$mean_X[x$timevar_l1])
     }
 
-    var_l2 <- paste0("cgm(", names(x$mean_W), ")")
+    var_l2 <- if (length(names(x$mean_W)) == 0) {
+        character()
+    } else {
+        paste0("cgm(", names(x$mean_W), ")")
+    }
 
     # TODO deal with binary
     var_prod <- unlist(lapply(var_l1, \(x) {
