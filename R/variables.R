@@ -176,9 +176,10 @@ levels.mp_variable <- function(x) {
         if (x$predictors |> has_variable(y)) cli::cli_abort(
             'A predictor variable has already specified by the name "{y$name}".'
         )
-        timevars <- sapply(
+        timevars <- vapply(
             x$predictors,
-            \(.)  'mp_timevar' %in% class(.)  # Select timevar
+            \(.)  'mp_timevar' %in% class(.),  # Select timevar
+            logical(1L)
         )
         if (TRUE %in% timevars)  cli::cli_abort( c(
             'A time variable has already been specified.',

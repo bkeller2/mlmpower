@@ -61,9 +61,9 @@ extract_results <- function(x, ddf = 'Satterthwaite') {
     covs <- with(vc, `_id`[lower.tri(`_id`)])
     names(covs) <- unlist(
         lapply(seq_along(vars), \(i) {
-            sapply(seq_along(vars)[-seq_len(i)], \(j) {
+            vapply(seq_along(vars)[-seq_len(i)], \(j) {
                 paste0( 'cov[', names(vars)[i],', ', names(vars)[j], ']')
-            })
+            }, character(1L))
         })
     )
 
@@ -109,14 +109,14 @@ power_table <- function(x) {
             paste('±', formatC(x[,2], digits = 2, format = 'f'))
         )
     )
-    rownames(d) <-  sapply(strsplit(row.names(x), '.', fixed = T), \(x) {
+    rownames(d) <-  vapply(strsplit(row.names(x), '.', fixed = T), \(x) {
         if (x[1] == 'fixed') {
             paste0('Fixed:  ', paste0(x[-1], collapse = '.'))
         }
         else {
             paste0('Random: Omnibus Test')
         }
-    })
+    }, character(1L))
     print(d, right = F)
     invisible(d)
 }

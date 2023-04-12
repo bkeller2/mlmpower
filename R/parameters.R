@@ -3,13 +3,13 @@
 #' @noRd
 `_convert` <- function() {
     # obtain level-1 and level-2 vars
-    l1 <- which(sapply(predictors, levels) == 1)
-    l2 <- which(sapply(predictors, levels) == 2)
+    l1 <- which(vapply(predictors, levels, numeric(1L)) == 1)
+    l2 <- which(vapply(predictors, levels, numeric(1L)) == 2)
 
     # Selectors for products
-    sel_p <- sapply(actions, \(.) .$type == "product")
+    sel_p <- vapply(actions, \(.) .$type == "product", logical(1L))
     # selectors for random slopes
-    sel_r <- sapply(actions, \(.) .$type == "random_slope")
+    sel_r <- vapply(actions, \(.) .$type == "random_slope", logical(1L))
 
     # Make product weight matrix
     # NOTE Assumes first name is always level-1
@@ -31,19 +31,19 @@
         # Get means
         mean_Y <- outcome$mean
         names(mean_Y) <- outcome$name
-        mean_X <- sapply(predictors[l1], \(.) .$mean)
-        mean_W <- sapply(predictors[l2], \(.) .$mean)
+        mean_X <- vapply(predictors[l1], \(.) .$mean, numeric(1L))
+        mean_W <- vapply(predictors[l2], \(.) .$mean, numeric(1L))
 
         # Get model implied means of X based on centering
         model_mean_X <- ifelse(
-            sapply(predictors[l1], \(.) 'mp_timevar' %in% class(.)),
+            vapply(predictors[l1], \(.) 'mp_timevar' %in% class(.), logical(1L)),
             mean_X,
             0
         )
         # Get variances
         var_Y <- outcome$sd^2
-        var_X <- sapply(predictors[l1], \(.) .$sd^2)
-        var_W <- sapply(predictors[l2], \(.) .$sd^2)
+        var_X <- vapply(predictors[l1], \(.) .$sd^2, numeric(1L))
+        var_W <- vapply(predictors[l2], \(.) .$sd^2, numeric(1L))
         # Get correlations
         corr_X <- corrs$within_cor
         corr_W <- corrs$between_cor
@@ -52,9 +52,9 @@
         # Get iccs
         # TODO Deal with multiple iccs
         icc_Y <- if (is.null(outcome$icc)) effect_size$icc else outcome$icc
-        icc_X <- sapply(predictors[l1], \(.) {
+        icc_X <- vapply(predictors[l1], \(.) {
             if (is.null(.$icc)) effect_size$icc else .$icc
-        })
+        }, numeric(1L))
         # Get R2s
         R2_X_w <- effect_size$within
         R2_increment_b <- effect_size$between
@@ -64,20 +64,20 @@
         R2_ranslopes_w <- effect_size$random_slope
 
         # Get weights
-        weights_X_w <- sapply(predictors[l1], \(.) .$weight)
+        weights_X_w <- vapply(predictors[l1], \(.) .$weight, numeric(1L))
         weights_XXproduct_w <- NULL # Place holders (not used currently)
         weights_WWproduct_b <- NULL # Place holders (not used currently)
         weights_XWproduct_w <- c(pmat)
         weights_ranslopes_w <- rvec
         weights_increment_b <- c(
-            sapply(icc_X, \(.) if (. == 0) 0 else NA),
-            sapply(predictors[l2], \(.) .$weight)
+            vapply(icc_X, \(.) if (. == 0) 0 else NA, numeric(1L)),
+            vapply(predictors[l2], \(.) .$weight, numeric(1L))
         )
 
         # Set binary W for level2
-        binary_W <- sapply(predictors[l2], \(.) {
+        binary_W <- vapply(predictors[l2], \(.) {
             if ("mp_binary" %in% class(.)) .$mean else 0.0
-        })
+        }, numeric(1L))
     })
 
     # Return list as env
@@ -272,9 +272,9 @@ new_parameters <- function(model) {
         vars_W <- names(mean_W)
         vars_W[binary_W_ind == T] <- paste0(vars_W[binary_W_ind == T], "_binary")
         vars_XW <- unlist(lapply(vars_Xw, \(x) {
-            sapply(vars_W, \(w) {
+            vapply(vars_W, \(w) {
                 paste0(x, "*", w)
-            })
+            }, character(1L))
         }))
 
         # collect parameters and construct names
@@ -341,9 +341,9 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
 
     # TODO deal with binary
     var_prod <- unlist(lapply(var_l1, \(x) {
-        sapply(var_l2, \(w) {
+        vapply(var_l2, \(w) {
             paste0(x, ":", w)
-        })
+        }, character(1L))
     }))
     # Set between to 0 so its dropped
     gammas[seq_len(n_l1) + (1 + n_l1 + n_l1 * n_l2)][cgm_sel] <- 0

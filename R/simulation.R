@@ -6,13 +6,13 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
     # TODO validate inputs
 
     # Obtain levels
-    lvls <- sapply(object$predictors, levels)
+    lvls <- vapply(object$predictors, levels, numeric(1L))
 
     # Obtain timevar level-1 indicators
-    timevar_l1 <- sapply(
+    timevar_l1 <- unlist(lapply(
         object$predictors[lvls == 1],  # Subset level-1
         \(.)  'mp_timevar' %in% class(.)  # Select timevar
-    )
+    ))
     if (sum(timevar_l1) > 1) cli::cli_abort("Only one timevar should be specified")
 
     # Change within sample size if timevar specified
@@ -154,8 +154,8 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
     names(d) <- c(
         '_id',
         names(p$mean_Y),
-        names(which(sapply(object$predictors, levels) == 1)),
-        names(which(sapply(object$predictors, levels) == 2))
+        names(which(vapply(object$predictors, levels, numeric(1L)) == 1)),
+        names(which(vapply(object$predictors, levels, numeric(1L)) == 2))
     )
     # Add timevar_l1 to parameters
     p$timevar_l1 <- timevar_l1
@@ -215,9 +215,10 @@ power_analysis <- function(
 
     # Check for missing n_within
     if (missing(n_within)) {
-        timevars <- which(sapply(
+        timevars <- which(vapply(
             model$predictors,
-            \(.)  'mp_timevar' %in% class(.)  # Select timevar
+            \(.)  'mp_timevar' %in% class(.),  # Select timevar
+            logical(1L)
         ))
         if (length(timevars) == 0) cli::cli_abort(
             '{.cli n_within} is missing with no time variable.'
