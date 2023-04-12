@@ -79,8 +79,7 @@ extract_results <- function(x, ddf = 'Satterthwaite') {
 #' Internal helper for computing jackknife standard errors
 #' @noRd
 jack_se <- function(data, func) {
-    data <- data[, apply(data, 2, function(x) !any(is.na(x)))] # Drop Missing
-    jack <- sapply(seq_len(NCOL(data)), \(i) func(data[,-i]))
+    jack <- vapply(seq_len(NCOL(data)), \(i) func(data[,-i, drop = F]), numeric(NROW(data)))
     v <- ((NCOL(jack) -1) / NCOL(jack)) * rowSums((jack - rowMeans(jack))^2)
     sqrt(v)
 }
