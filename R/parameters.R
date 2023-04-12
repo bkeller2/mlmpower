@@ -266,9 +266,13 @@ new_parameters <- function(model) {
         R2check_ranicept <- tau00 / check_var_Y
 
         # variable names
-        vars_Xw <- paste0(names(mean_X), "_w")
-        vars_Xb <- paste0(names(mean_X), "_b")
-        vars_Xt <- paste0(names(mean_X), "_t")
+        if (length(names(mean_X)) != 0) {
+            vars_Xw <- paste0(names(mean_X), "_w")
+            vars_Xb <- paste0(names(mean_X), "_b")
+            vars_Xt <- paste0(names(mean_X), "_t")
+        } else {
+            vars_Xw <- vars_Xb <- vars_Xt <- names(mean_X)
+        }
         vars_W <- names(mean_W)
         vars_W[binary_W_ind == T] <- paste0(vars_W[binary_W_ind == T], "_binary")
         vars_XW <- unlist(lapply(vars_Xw, \(x) {
