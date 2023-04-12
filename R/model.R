@@ -58,7 +58,7 @@ subset.mp_model <- function(x, icc) {
 }
 
 #' With binding for `mp_model`
-#' @noRd
+#' @export
 with.mp_model <- function(data, expr, ...) {
     if (!is.function(expr)) {
         cli::cli_abort('Second argument must be function')
