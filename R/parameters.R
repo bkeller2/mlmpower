@@ -111,27 +111,15 @@ new_parameters <- function(model) {
         # construct the within-cluster correlation and covariance matrix of the level-1 Xs
         cor_XX_w <- matrix(1, nrow = num_X, ncol = num_X)
         cor_XX_w[lower.tri(cor_XX_w)] <- cor_XX_w[upper.tri(cor_XX_w)] <- corr_X(num_X * (num_X - 1) / 2)
-        if (length(cor_XX_w) == 1) {
-            phi_XX_w <- cor_XX_w * sqrt(var_X_w * var_X_w)
-        } else {
-            phi_XX_w <- diag(sqrt(var_X_w)) %*% cor_XX_w %*% diag(sqrt(var_X_w))
-        }
+        phi_XX_w <- diagonal(sqrt(var_X_w)) %*% cor_XX_w %*% diagonal(sqrt(var_X_w))
 
         # construct the between-cluster covariance matrix of X's level-2 group means
-        if (length(cor_XX_w) == 1) {
-            phi_XX_b <- cor_XX_w * sqrt(var_X_b * var_X_b)
-        } else {
-            phi_XX_b <- diag(sqrt(var_X_b)) %*% cor_XX_w %*% diag(sqrt(var_X_b))
-        }
+        phi_XX_b <- diagonal(sqrt(var_X_b)) %*% cor_XX_w %*% diagonal(sqrt(var_X_b))
 
         # construct the between-cluster correlation and covariance matrix of the level-2 Ws
         cor_WW_b <- matrix(1, nrow = num_W, ncol = num_W)
         cor_WW_b[lower.tri(cor_WW_b)] <- cor_WW_b[upper.tri(cor_WW_b)] <- corr_W(num_W * (num_W - 1) / 2)
-        if (length(cor_WW_b) == 1) {
-            phi_WW_b <- cor_WW_b * sqrt(var_W * var_W)
-        } else {
-            phi_WW_b <- diag(sqrt(var_W)) %*% cor_WW_b %*% diag(sqrt(var_W))
-        }
+        phi_WW_b <- diagonal(sqrt(var_W)) %*% cor_WW_b %*% diagonal(sqrt(var_W))
 
         # for binary level-2 variables, convert inputted correlations to point-biserial correlations then to covariances
         if (is.null(binary_W)) {
@@ -151,11 +139,7 @@ new_parameters <- function(model) {
 
         # construct the between-cluster covariance matrix of the X cluster means and level-2 Ws
         cor_XW_b <- matrix(corr_X_W(num_X * num_W), nrow = num_W, ncol = num_X)
-        if (length(cor_XW_b) == 1) {
-            phi_XW_b <- cor_XW_b * sqrt(var_W * var_X_b)
-        } else {
-            phi_XW_b <- diag(sqrt(var_W)) %*% cor_XW_b %*% diag(sqrt(var_X_b))
-        }
+        phi_XW_b <- diagonal(sqrt(var_W)) %*% cor_XW_b %*% diagonal(sqrt(var_X_b))
 
         # construct the between-cluster covariance matrix
         phi_b <- rbind(cbind(phi_XX_b, t(phi_XW_b)), cbind(phi_XW_b, t(phi_WW_b)))
@@ -166,11 +150,11 @@ new_parameters <- function(model) {
         phi_w <- rbind(cbind(phi_XX_w, t(phi_XwithXW_w)), cbind(phi_XwithXW_w, t(phi_XWwithXW_w)))
 
         # solve for the within-cluster regression coefficients
-        weights_scaled <- 1 / sqrt(diag(phi_XX_w)) * weights_X_w
+        weights_scaled <- 1 / sqrt(diagonal(phi_XX_w)) * weights_X_w
         gamma_X_w <- weights_scaled * c(sqrt((var_Y * R2_X_w) / t(weights_scaled) %*% phi_XX_w %*% weights_scaled))
 
         # solve for the cross-level product coefficients
-        weights_scaled <- 1 / sqrt(diag(phi_XWwithXW_w)) * weights_XWproduct_w
+        weights_scaled <- 1 / sqrt(diagonal(phi_XWwithXW_w)) * weights_XWproduct_w
         if (sum(weights_XWproduct_w) == 0) {
             gamma_XW_w <- weights_XWproduct_w
         } else {
@@ -186,13 +170,13 @@ new_parameters <- function(model) {
         cor_raneffects[lower.tri(cor_raneffects)] <- t(cor_raneffects)[lower.tri(t(cor_raneffects))]
 
         # solve for the random slope variances
-        cor_ranslopes <- cor_raneffects[-1, -1]
-        tau_trace <- (var_Y * R2_ranslopes_w) / sum(diag(cor_ranslopes %*% phi_XX_w %*% diag(weights_ranslopes_w)))
+        cor_ranslopes <- cor_raneffects[-1, -1, drop = F]
+        tau_trace <- (var_Y * R2_ranslopes_w) / sum(diagonal(cor_ranslopes %*% phi_XX_w %*% diagonal(weights_ranslopes_w)))
         var_ranslopes <- weights_ranslopes_w * tau_trace
         if (length(var_ranslopes) == 1) {
             tau_ranslopes <- var_ranslopes
         } else {
-            tau_ranslopes <- diag(sqrt(var_ranslopes)) %*% cor_ranslopes %*% diag(sqrt(var_ranslopes))
+            tau_ranslopes <- diagonal(sqrt(var_ranslopes)) %*% cor_ranslopes %*% diagonal(sqrt(var_ranslopes))
         }
 
         # compute the within-cluster residual variance
@@ -209,8 +193,8 @@ new_parameters <- function(model) {
 
             # Predefine and only compute for non zero phi_b
             weights_scaled <- numeric(sum(select_weighted))
-            sel_weight <- diag(resvar_W_b) != 0 # Select out only non-zero diagonals
-            weights_scaled[sel_weight] <- 1 / sqrt(diag(resvar_W_b)[sel_weight]) * weights_increment_b[select_weighted][sel_weight]
+            sel_weight <- diagonal(resvar_W_b) != 0 # Select out only non-zero diagonals
+            weights_scaled[sel_weight] <- 1 / sqrt(diagonal(resvar_W_b)[sel_weight]) * weights_increment_b[select_weighted][sel_weight]
             gamma_weighted_b <- weights_scaled * c(sqrt((var_Y * R2_increment_b) / t(weights_scaled) %*% resvar_W_b %*% weights_scaled))
             gamma_b <- c(gamma_w[seq_len(num_X)], rep(0, num_W))
             gamma_b[select_weighted] <- gamma_weighted_b
@@ -218,8 +202,8 @@ new_parameters <- function(model) {
         } else {
             # Predefine and only compute for non zero phi_b
             weights_scaled <- numeric(NROW(phi_b))
-            sel_weight <- diag(phi_b) != 0 # Select out only non-zero diagonals
-            weights_scaled[sel_weight] <- 1 / sqrt(diag(phi_b)[sel_weight]) * weights_increment_b[sel_weight]
+            sel_weight <- diagonal(phi_b) != 0 # Select out only non-zero diagonals
+            weights_scaled[sel_weight] <- 1 / sqrt(diagonal(phi_b)[sel_weight]) * weights_increment_b[sel_weight]
             gamma_b <- weights_scaled * c(sqrt((var_Y * R2_increment_b) / t(weights_scaled) %*% phi_b %*% weights_scaled))
         }
 
@@ -230,7 +214,7 @@ new_parameters <- function(model) {
         if (num_X == 1) {
             tau_ranslopes <- var_ranslopes
         } else {
-            tau_ranslopes <- diag(sqrt(c(var_ranslopes))) %*% cor_raneffects[-1, -1, drop = F] %*% diag(sqrt(c(var_ranslopes)))
+            tau_ranslopes <- diagonal(sqrt(c(var_ranslopes))) %*% cor_raneffects[-1, -1, drop = F] %*% diagonal(sqrt(c(var_ranslopes)))
         }
         # explained level-2 variation
         b <- t(gamma_b) %*% phi_b %*% gamma_b
@@ -240,7 +224,7 @@ new_parameters <- function(model) {
         tau00 <- 0.5 * (-2 * b + a^2 - 2 * s + 2 * var_Y_b) + 0.5 * sqrt(-4 * b * a^2 + a^4 - 4 * a^2 * s + 4 * a^2 * var_Y_b)
 
         # compute intercept-slope covariance and construct tau matrix
-        tau <- diag(sqrt(c(tau00, var_ranslopes))) %*% cor_raneffects %*% diag(sqrt(c(tau00, var_ranslopes)))
+        tau <- diagonal(sqrt(c(tau00, var_ranslopes))) %*% cor_raneffects %*% diagonal(sqrt(c(tau00, var_ranslopes)))
         cor_raneffects[tau == 0] <- 0
 
         # compute fixed intercept and construct coefficient matrix
@@ -251,11 +235,11 @@ new_parameters <- function(model) {
 
         # TODO figure out way to check for invalid R2
         # R-square summary
-        check_var_Y <- t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*% phi_b %*% gamma_b + sum(diag(tau[-1, -1] %*% phi_XX_w)) + tau00 + var_e_w
+        check_var_Y <- t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*% phi_b %*% gamma_b + sum(diagonal(tau[-1, -1] %*% phi_XX_w)) + tau00 + var_e_w
         R2check_X_w <- t(gamma_X_w) %*% phi_XX_w %*% gamma_X_w / check_var_Y
         R2check_XW_w <- t(gamma_XW_w) %*% phi_XWwithXW_w %*% gamma_XW_w / check_var_Y
-        R2check_ranslopes_w <- sum(diag(tau_ranslopes %*% phi_XX_w)) / check_var_Y
-        R2check_var_e <- ((1 - icc_Y) * var_Y - t(gamma_w) %*% phi_w %*% gamma_w - sum(diag(tau_ranslopes %*% phi_XX_w))) / check_var_Y
+        R2check_ranslopes_w <- sum(diagonal(tau_ranslopes %*% phi_XX_w)) / check_var_Y
+        R2check_var_e <- ((1 - icc_Y) * var_Y - t(gamma_w) %*% phi_w %*% gamma_w - sum(diagonal(tau_ranslopes %*% phi_XX_w))) / check_var_Y
         R2check_XW_b <- t(gamma_b) %*% phi_b %*% gamma_b / check_var_Y
         if (sum(select_weighted) != NROW(phi_b)) {
             R2check_increment_b <- t(gamma_weighted_b) %*% resvar_W_b %*% gamma_weighted_b / check_var_Y
@@ -367,7 +351,7 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
     if (nested) {
         model_random <- "(1 | `_id`)"
     } else {
-        raneff_model <- c("1", var_l1[diag(x$tau)[-1] != 0])
+        raneff_model <- c("1", var_l1[diagonal(x$tau)[-1] != 0])
         raneff_model <- paste0(raneff_model, collapse = " + ")
         model_random <- paste0("(", raneff_model, " | ", "`_id`)")
     }

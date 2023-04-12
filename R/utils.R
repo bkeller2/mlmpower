@@ -162,3 +162,11 @@ online_mean <- function(e1, e2) {
     # otherwise handle adding one element
     return(e1)
 }
+
+#' Internal function to take diagonal safely even if its one element
+#'
+#' @noRd
+diagonal <- function(x) {
+    if (is.matrix(x)) diag(x)
+    else diag(x, NROW(x), NROW(x))
+}
