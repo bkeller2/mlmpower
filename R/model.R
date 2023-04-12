@@ -123,13 +123,16 @@ print.mp_model <- function(x, ...) {
 
 
 #' Provides parameter summary of a `mp_model` object
-#' TODO improvce printing of parameters summary
-#' HANDLE random values
 #' @export
-summary.mp_model <- function(object, ...) {
+summary.mp_model <- function(object, reps = 1000, ...) {
 
     # Get icc
     icc <- object$effect_size$icc
+
+    # Check if fixed and warn if not
+    if (!is_fixed(object$corrs))  {
+        cli::cli_alert_warning('Parameters are averaged over {reps} replications.')
+    }
 
     # Handle multiple ICCs
     if (length(icc) > 1) {
@@ -139,12 +142,12 @@ summary.mp_model <- function(object, ...) {
 
         # Run simulation
         results <- lapply(icc, \(x) {
-            model |> subset(icc = x) |> new_parameters()
+            model |> subset(icc = x) |> new_parameters_mean(reps)
         })
 
     } else {
-        results <- object |> new_parameters()
+        results <- object |> new_parameters_mean(reps)
     }
 
-    results
+    results # Return results
 }

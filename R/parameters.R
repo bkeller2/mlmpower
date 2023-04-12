@@ -283,6 +283,30 @@ new_parameters <- function(model) {
     structure(list2env(l), class = c("mp_parameters", "mp_base"))
 }
 
+#' Internal function to solve parameters based on
+#' a converted `mp_model` object across multiple reps
+#' TODO improve this to not require random sims
+#' @noRd
+new_parameters_mean <- function(model, reps) {
+    # Check if fixed and return normally
+    if (is_fixed(model$corrs)) return(model |> new_parameters())
+    # Otherwise find average correlation
+
+    # Create temp model with default corrs
+    new_model <- clone(model)
+
+    # Find average
+    new_model$corrs <- correlations(
+        within_cor  = fixed(mean(model$corrs$within_cor(reps))),
+        between_cor = fixed(mean(model$corrs$between_cor(reps))),
+        randeff_cor = fixed(mean(model$corrs$randeff_cor(reps)))
+    )
+
+    # output parameters
+    new_model |> new_parameters()
+}
+
+
 #' Validate parameters
 #' @noRd
 is.parameters <- function(x) {

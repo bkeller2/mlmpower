@@ -2,14 +2,10 @@
 % Please edit documentation in R/model.R
 \name{summary.mp_model}
 \alias{summary.mp_model}
-\title{Provides parameter summary of a `mp_model` object
-TODO improvce printing of parameters summary
-HANDLE random values}
+\title{Provides parameter summary of a `mp_model` object}
 \usage{
-\method{summary}{mp_model}(object, ...)
+\method{summary}{mp_model}(object, reps = 1000, ...)
 }
 \description{
 Provides parameter summary of a `mp_model` object
-TODO improvce printing of parameters summary
-HANDLE random values
 }

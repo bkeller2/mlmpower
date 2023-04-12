@@ -9,6 +9,8 @@ random <- function(lower, upper) {
             'lower must be less than upper in {.cls random}'
         )
     }
+    `_fixed` <- F
+    `_call`  <- call('random', lower, upper)
     function(n) {
         runif(n, lower, upper)
     }
@@ -18,13 +20,16 @@ random <- function(lower, upper) {
 #' @export
 fixed <- function(value) {
     force(value)
+    `_fixed` <- T
+    `_call`  <- call('fixed', value)
     function(n) {
         rep(value, n)
     }
 }
 
-#' mp_correlations object
+#' Internal function for mp_correlations object
 #'
+#' @noRd
 mp_correlations <- function(within_cor, between_cor, randeff_cor) {
     # Create environment
     e <- list2env(
@@ -55,14 +60,31 @@ correlations <- function(
     mp_correlations(within_cor, between_cor, randeff_cor)
 }
 
-#' Create default correlations
+#' Internal function to create default correlations
 #'
+#' @noRd
 default_correlations <- function() {
     e <- correlations()
     attr(e, 'default') <- TRUE
     return(e)
 }
 
+#' Internal function to check if a specific corr is fixed
+#'
+#' @noRd
+is_fixed_cor <- function(x) {
+    if (!is.function(x)) return(TRUE)
+    isTRUE(environment(x)$`_fixed`)
+}
+
+#' Internal function to check if all correlations are fixed
+#'
+#' @noRd
+is_fixed <- function(x) {
+    is_fixed_cor(x$within_cor) &
+    is_fixed_cor(x$between_cor) &
+    is_fixed_cor(x$randeff_cor)
+}
 
 #' Adds correlations to `mp_base` class
 #'
