@@ -113,7 +113,7 @@ power_table <- function(x) {
             paste0('Fixed:  ', paste0(x[-1], collapse = '.'))
         }
         else {
-            paste0('Random: Omnibus Test')
+            paste0('Random: Slopes Test')
         }
     }, character(1L))
     print(d, right = F)
@@ -169,3 +169,11 @@ diagonal <- function(x) {
     if (is.matrix(x)) diag(x)
     else diag(x, NROW(x), NROW(x))
 }
+
+#' Internal map function that uses all combinations of inputs
+#' @noRd
+cmap <- function(f, ...) {
+    l <- expand.grid(..., stringsAsFactors=FALSE)
+    do.call(mapply, c(FUN = f, l, SIMPLIFY = FALSE))
+}
+

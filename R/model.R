@@ -17,11 +17,25 @@ new_model <- function(o) {
     structure(e, class = c('mp_model', 'mp_base'))
 }
 
-#' Validate model
+#' Check if `mp_model`
 #' @noRd
 is.model <- function(x) {
     inherits(x, 'mp_model')
 }
+
+#' Validate `mp_model`
+#' @noRd
+is.valid <- function(x) {
+    # TODO check that this is correctly specified
+    #  - [ ] Check its a `mp_model` object
+    #  - [ ] Check if it has outcome
+    #  - [ ] Check if it has effect size
+    #  - [ ] Check valid effect size
+    #    - (icc, proper predictors based on r2, etc)
+
+    invisible(x)
+}
+
 
 #' Internal function for cloning a model
 #' @noRd

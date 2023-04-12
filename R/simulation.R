@@ -176,96 +176,42 @@ analyze <- function(model, n_within, n_between, alpha = 0.05) {
     # Make centering env
     e <- centering_env(d$`_id`)
 
-    # Get formula for model
+    # Get formulas for model
     attr(d, 'parameters') |> to_formula(e) -> f
+    attr(d, 'parameters') |> to_formula(e, nested = T) -> f_nest
 
     # Fit Model with lme4 and return results
     full_reml <- quiet(lmerTest::lmer(f, d))
-    full_ml   <- quiet(lme4::lmer(f, d, REML = FALSE))
-    nested    <- quiet(lme4::lmer(attr(d, 'parameters') |> to_formula(e, nested = T), d, REML = FALSE))
-
     # Obtain LRT
-    lrt <- varTestnlme::varCompTest(full_ml, nested, pval.comp = "bounds", output = FALSE)
+    if (!identical(f, f_nest)) {
+        full_ml <- quiet(lme4::lmer(f, d, REML = FALSE))
+        nested <- quiet(lme4::lmer(f_nest, d, REML = FALSE))
+        lrt <- varTestnlme::varCompTest(full_ml, nested, pval.comp = "bounds", output = FALSE)
+        rand_result <- c(omnibus_test = lrt$p.value[[4]] < alpha)
+    } else {
+        rand_result <- c(omnibus_test = NA)
+    }
 
     # Return output
     list(
         estimates = full_reml |> extract_results(),
         sig_test = list(
             fixed  = coefficients(summary(full_reml) )[,'Pr(>|t|)'] < alpha,
-            random = c(omnibus_test = lrt$p.value[[4]] < alpha)
+            random = rand_result
         ),
         parameters =  attr(d, 'parameters')
     )
 }
 
 
-
-#' Conduct a power analysis based on `mp_model`
+#' Internal power analysis function based on `mp_model`
 #'
-#' @export
-power_analysis <- function(
+#' @noRd
+`_power_analysis` <- function(
         model,
         replications,
         n_within,
         n_between) {
-
-
-    # Get icc
-    icc <- model$effect_size$icc
-
-    # Check for missing n_within
-    if (missing(n_within)) {
-        timevars <- which(vapply(
-            model$predictors,
-            \(.)  'mp_timevar' %in% class(.),  # Select timevar
-            logical(1L)
-        ))
-        if (length(timevars) == 0) cli::cli_abort(
-            '{.cli n_within} is missing with no time variable.'
-        )
-        len <- length(model$predictors[[timevars]]$values)
-        if (missing(n_within)) {
-            n_within <- len
-        } else if (len != n_within) {
-            cli::cli_alert_info(
-                "Setting n_within = {len} to match time variable's length"
-            )
-            n_within <- len
-        }
-    }
-
-    # TODO validate inputs
-    # TODO dont' allow reps to be 2
-
-    # Handle multiple ICCs
-    if (length(icc) > 1) {
-
-        # Create names
-        names(icc) <- paste0('icc = ', icc)
-
-        # Run simulation
-        results <- lapply(icc, \(x) {
-            model |> subset(icc = x) |> power_analysis(
-                replications,
-                n_within,
-                n_between
-            )
-        })
-
-        # Return results
-        return(structure(list(
-            sim = list(
-                model = model,
-                replications = replications,
-                n_within = n_within,
-                n_between = n_between
-            ),
-            power = lapply(results, \(.) .$power),
-            estimates = lapply(results, \(.) .$estimates),
-            mean_parameters = lapply(results, \(.) .$mean_parameters)
-        ), class = c('mp_power', 'mp_base')))
-    }
-    # Otherwise handle single replication
 
     # Run reps and include progress bar
     results <- lapply(
@@ -273,8 +219,7 @@ power_analysis <- function(
             seq_len(replications),
             clear = FALSE,
             format = paste0(
-                "   Simulating ICC = ", icc ,
-                ": {cli::pb_bar} {cli::pb_current}/{cli::pb_total} ",
+                "  Simulating {cli::pb_bar} {cli::pb_current}/{cli::pb_total} ",
                 "| Elapsed: {cli::pb_elapsed}",
                 "| ETA: {cli::pb_eta}"
             )
@@ -284,9 +229,12 @@ power_analysis <- function(
     )
 
     # Extract results
-    e <- sapply(results, \(.) unlist(.$estimates))
-    s <- sapply(results, \(.) unlist(.$sig_test))
+    e <- sapply(results, \(.) unlist(.$estimates), simplify = 'array')
+    s <- sapply(results, \(.) unlist(.$sig_test), simplify = 'array')
     p <- Reduce('+', lapply(results, \(.) .$parameters))
+
+    # Drop omnibus test if missing
+    s <- na.omit(s)
 
     # Output table
     structure(
@@ -310,6 +258,113 @@ power_analysis <- function(
         ),
         class = c('mp_power', 'mp_base')
     )
+
+}
+
+
+#' Conduct a power analysis based on `mp_model`
+#'
+#' @export
+power_analysis <- function(
+        model,
+        replications,
+        n_within,
+        n_between) {
+
+    # Validate inputs
+
+    # Validate model
+    is.valid(model)
+
+    if (!is.numeric(n_within)) cli::cli_abort(
+        '{.cli n_within} must be a numeric vector'
+    )
+    if (!is.numeric(n_between)) cli::cli_abort(
+        '{.cli n_between} must be a numeric vector'
+    )
+    if (replications < 2) cli::cli_abort(
+        '{.cli replications} must be greater than 1.'
+    )
+
+    # Get icc
+    icc <- model$effect_size$icc
+
+    # Check for timevars and adjust n_within accordingly
+    timevars <- which(vapply(
+        model$predictors,
+        \(.)  'mp_timevar' %in% class(.),  # Select timevar
+        logical(1L)
+    ))
+
+    if (missing(n_within)) {
+        if (length(timevars) == 0) cli::cli_abort(
+            '{.cli n_within} is missing with no time variable.'
+        )
+        n_within <- length(model$predictors[[timevars]]$values)
+    } else if (length(timevars) == 1) {
+        len <- length(model$predictors[[timevars]]$values)
+        # Loop over n_within
+        alert <- TRUE # Only alert once
+        for (i in seq_along(n_within)) {
+            if (len < n_within[i]) {
+                if (alert) {
+                    cli::cli_alert_info(
+                        "Setting n_within = {len} to match time variable's length"
+                    )
+                    alert <- false
+                }
+                n_within[i] <- len
+            }
+        }
+    }
+    else if (length(timevars) > 1) {
+        cli::cli_abort('Only one time variable is currently allowed.')
+    }
+
+    # Run simulation based on all combos
+    results <- cmap(
+        \(icc, n_within, n_between) {
+            cli::cli_alert(c(
+                "ICC = {formatC(icc, digits = 2, format = 'f' )}, ",
+                "n_within = {n_within}, ",
+                "n_between = {n_between}"
+            ))
+            model |> subset(icc = icc) |> `_power_analysis`(
+                replications,
+                n_within,
+                n_between
+            )
+        },
+        icc = icc,
+        n_within = n_within,
+        n_between = n_between
+    )
+
+    # Return object if only length of 1
+    if (length(results) == 1) return(results[[1]])
+
+    # Otherwise reconstruct into single object
+
+    # Get named list
+    nam <-  apply(
+        expand.grid(icc = icc, n_within = n_within, n_between = n_between),
+        MARGIN = 1,
+        FUN = \(.)  paste(names(.), '=' ,., collapse = ', ')
+    )
+
+    # Return results
+    return(structure(list(
+        sim = list(
+            model = model,
+            replications = replications,
+            n_within = n_within,
+            n_between = n_between
+        ),
+        power           = lapply(setNames(results, nam), \(.) .$power),
+        estimates       = lapply(setNames(results, nam), \(.) .$estimates),
+        mean_parameters = lapply(setNames(results, nam), \(.) .$mean_parameters)
+    ), class = c('mp_power', 'mp_base')))
+
 }
 
 #' Print a `mp_power`
@@ -339,7 +394,6 @@ print.mp_power <- function(x, ...) {
     cli::cli_li('RANDOM SLOPE = {x$sim$model$effect_size$random_slope}')
     cli::cli_li('PRODUCT = {x$sim$model$effect_size$product}')
     cli::cli_end()
-
 
     cli::cli_h2('Power Analysis Results')
     # Handle only one icc case
