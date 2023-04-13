@@ -58,7 +58,6 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
 
     # Generate X predictors
 
-    # TODO deal with timevars
     # Generate Level-1 Time variables if exists
     if (TRUE %in% timevar_l1) {
         # Get values

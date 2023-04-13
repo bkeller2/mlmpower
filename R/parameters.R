@@ -49,8 +49,7 @@
         corr_W <- corrs$between_cor
         corr_X_W <- corrs$between_cor
         corr_raneffects <- corrs$randeff_cor
-        # Get iccs
-        # TODO Deal with multiple iccs
+        # Get icc (Assumes only one)
         icc_Y <- if (is.null(outcome$icc)) effect_size$icc else outcome$icc
         icc_X <- vapply(predictors[l1], \(.) {
             if (is.null(.$icc)) effect_size$icc else .$icc
@@ -317,7 +316,6 @@ is.parameters <- function(x) {
 #'
 #' @noRd
 to_formula <- function(x, e = globalenv(), nested = FALSE) {
-    # TODO validate?
 
     # Get regression coefficients
     gammas <- x$gammas

@@ -105,7 +105,6 @@ within_predictor <- function(name, weight = 1, mean = 0, sd = 1, icc = NULL) {
 within_time_predictor <- function(name, weight = 1, values) {
 
     # TODO validate values
-    # TODO require 0 in values otherwise error
     v <- new_variable(
         c('timevar', 'predictor'),
         name, weight,
