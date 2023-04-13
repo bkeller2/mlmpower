@@ -9,22 +9,62 @@ random <- function(lower, upper) {
             'lower must be less than upper in {.cls random}'
         )
     }
-    `_fixed` <- F
+    `_fixed` <- FALSE
     `_call`  <- call('random', lower, upper)
-    function(n) {
-        runif(n, lower, upper)
-    }
+    `_mean`  <- mean(lower, upper)
+    structure(
+        function(n) runif(n, lower, upper),
+        class = c('mp_corr_func', 'function')
+    )
 }
 
 #' Specify fixed correlations
 #' @export
 fixed <- function(value) {
     force(value)
-    `_fixed` <- T
+    `_fixed` <- TRUE
     `_call`  <- call('fixed', value)
-    function(n) {
-        rep(value, n)
-    }
+    `_mean`  <- value
+    structure(
+        function(n) rep(value, n),
+        class = c('mp_corr_func', 'function')
+    )
+}
+
+#' Internal function to check if a specific corr is fixed
+#'
+#' @noRd
+is_fixed <- function(x) {
+    if (!is.function(x)) return(TRUE)
+    isTRUE(environment(x)$`_fixed`)
+}
+
+#' Convert `mp_corr_func` to a character
+#' @noRd
+as.character.mp_corr_func <- function(x, ...) {
+    if (is_fixed(x)) as.character(environment(x)$`_value`)
+    else deparse(environment(x)$`_call`)
+}
+
+#' Validate `mp_corr_func`
+#' @noRd
+is.corr_func <- function(x) {
+    inherits(x, "mp_corr_func")
+}
+
+#' Obtain mean of `mp_corr_func`
+#' @noRd
+mean.mp_corr_func <- function(x, ...) {
+    environment(x)$`_mean`
+}
+
+#' Internal function to check if all correlations are fixed
+#'
+#' @noRd
+is_fixed_cor <- function(x) {
+    is_fixed(x$within_cor) &
+        is_fixed(x$between_cor) &
+        is_fixed(x$randeff_cor)
 }
 
 #' Internal function for mp_correlations object
@@ -56,6 +96,16 @@ correlations <- function(
     if (is.number(between_cor)) between_cor <- fixed(between_cor)
     if (is.number(randeff_cor)) randeff_cor <- fixed(randeff_cor)
 
+    # Validate that they are corr funcs
+    if (!is.corr_func(within_cor)) cli::cli_abort(
+        '{.cli within_cor} must be a single number or created via `fixed` or `random` functions'
+    )
+    if (!is.corr_func(between_cor))  cli::cli_abort(
+        '{.cli between_cor} must be a single number or created via `fixed` or `random` functions'
+    )
+    if (!is.corr_func(randeff_cor))  cli::cli_abort(
+        '{.cli randeff_cor} must be a single number or created via `fixed` or `random` functions'
+    )
     # Construct correlations object
     mp_correlations(within_cor, between_cor, randeff_cor)
 }
@@ -67,23 +117,6 @@ default_correlations <- function() {
     e <- correlations()
     attr(e, 'default') <- TRUE
     return(e)
-}
-
-#' Internal function to check if a specific corr is fixed
-#'
-#' @noRd
-is_fixed_cor <- function(x) {
-    if (!is.function(x)) return(TRUE)
-    isTRUE(environment(x)$`_fixed`)
-}
-
-#' Internal function to check if all correlations are fixed
-#'
-#' @noRd
-is_fixed <- function(x) {
-    is_fixed_cor(x$within_cor) &
-    is_fixed_cor(x$between_cor) &
-    is_fixed_cor(x$randeff_cor)
 }
 
 #' Adds correlations to `mp_base` class

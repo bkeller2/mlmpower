@@ -59,6 +59,10 @@ clone.mp_model <- function(x) {
 #'
 #' @export
 subset.mp_model <- function(x, icc) {
+
+    # Validate model first
+    is.valid(x)
+
     if (!is.number(icc)) {
         cli::cli_abort( 'icc needs to be a single number')
     }
@@ -83,55 +87,79 @@ with.mp_model <- function(data, expr, ...) {
 
 
 
-
-# TODO need way to validate model is correctly specified
-
 #' Prints `mp_model` object
 #' @export
 print.mp_model <- function(x, ...) {
+
+    # Validate model first
+    is.valid(x)
+
+    # Print specificaiton
     cli::cli_h2('{.cli mlmpower} model specification')
     cli::cli_h3('{.cli outcome}')
+    cli::cli_text('')
     print(x$outcome)
     cli::cli_h3('{.cli predictors}')
-    cli::cli_ol()
-    for (i in x$predictors) {
-        cli::cli_li('Predictor:')
-        print(i)
+    cli::cli_text('')
+    print(
+        do.call(
+            'rbind',
+            lapply(model$predictors, as.data.frame)
+        )[, c('level', 'icc', 'weight', 'type')],
+        right = FALSE
+    )
+
+    if (length(model$actions) > 0) {
+        cli::cli_h3('{.cli model specifications}')
         cli::cli_text('')
+        print(
+            do.call(
+                'rbind',
+                lapply(model$actions, as.data.frame)
+            ),
+            right = FALSE,
+            row.names = FALSE
+        )
     }
-    cli::cli_end()
 
     cli::cli_h3('{.cli effect sizes}')
-    cli::cli_ul()
-    cli::cli_li('ICC = {x$effect_size$icc}')
-    cli::cli_li('WITHIN = {x$effect_size$within}')
-    cli::cli_li('BETWEEN = {x$effect_size$between}')
-    cli::cli_li('RANDOM SLOPE = {x$effect_size$random_slope}')
-    cli::cli_li('PRODUCT = {x$effect_size$product}')
+    cli::cli_text('')
+    cli::cli_ul(
+        c(
+            'GLOBAL ICC = {x$effect_size$icc}',
+            'WITHIN = {x$effect_size$within}',
+            'BETWEEN = {x$effect_size$between}',
+            'RANDOM SLOPE = {x$effect_size$random_slope}',
+            'PRODUCT = {x$effect_size$product}'
+        )
+    )
+
+    cli::cli_h3('{.cli correlations}')
+    cli::cli_text('')
+    cli::cli_ul(
+        c(
+            'WITHIN = {as.character(x$corrs$within_cor)}',
+            'BETWEEN = {as.character(x$corrs$between_cor)}',
+            'RANDOM EFFECT = {as.character(x$corrs$randeff_cor)}'
+        )
+    )
     cli::cli_end()
-
-    # TODO print actions
-
-    # TODO need way to deal with functions printing
-    # cli::cli_h3('{.cli correlations}')
-    # cli::cli_ul()
-    # cli::cli_li('WITHIN = {x$corrs$within}')
-    # cli::cli_li('BETWEEN = {x$corrs$between}')
-    # cli::cli_li('RANDOM EFFECT = {x$corrs$randeff_cor}')
-    # cli::cli_end()
 }
 
 
 #' Provides parameter summary of a `mp_model` object
 #' @export
-summary.mp_model <- function(object, reps = 1000, ...) {
+summary.mp_model <- function(object, ...) {
+
+    # validate model
+    is.valid(object)
 
     # Get icc
     icc <- object$effect_size$icc
 
     # Check if fixed and warn if not
-    if (!is_fixed(object$corrs))  {
-        cli::cli_alert_warning('Parameters are averaged over {reps} replications.')
+    if (!is_fixed_cor(object$corrs))  {
+        cli::cli_alert_warning('Parameters are solved based on average correlation.')
     }
 
     # Handle multiple ICCs
@@ -142,11 +170,11 @@ summary.mp_model <- function(object, reps = 1000, ...) {
 
         # Run simulation
         results <- lapply(icc, \(x) {
-            model |> subset(icc = x) |> new_parameters_mean(reps)
+            model |> subset(icc = x) |> new_parameters_mean()
         })
 
     } else {
-        results <- object |> new_parameters_mean(reps)
+        results <- object |> new_parameters_mean()
     }
 
     results # Return results

@@ -4,7 +4,7 @@
 \alias{summary.mp_model}
 \title{Provides parameter summary of a `mp_model` object}
 \usage{
-\method{summary}{mp_model}(object, reps = 1000, ...)
+\method{summary}{mp_model}(object, ...)
 }
 \description{
 Provides parameter summary of a `mp_model` object

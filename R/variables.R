@@ -153,7 +153,7 @@ levels.mp_variable <- function(x) {
 #' Adds outcome to `mp_base` class
 #'
 #' @noRd
-`add.mp_outcome` <- function(x, y) {
+add.mp_outcome <- function(x, y) {
     # Add as outcome if model
     if (is.model(x)) {
         if (!is.null(x$outcome)) cli::cli_abort(
@@ -169,7 +169,7 @@ levels.mp_variable <- function(x) {
 #' Adds timevar to `mp_base` class
 #'
 #' @noRd
-`add.mp_timevar` <- function(x, y) {
+add.mp_timevar <- function(x, y) {
     # Add as predictor if model
     if (is.model(x)) {
         # check if predictor already there
@@ -196,7 +196,7 @@ levels.mp_variable <- function(x) {
 #' Adds predictor to `mp_base` class
 #'
 #' @noRd
-`add.mp_predictor` <- function(x, y) {
+add.mp_predictor <- function(x, y) {
     # Add as predictor if model
     if (is.model(x)) {
         # check if predictor already there
@@ -213,20 +213,34 @@ levels.mp_variable <- function(x) {
 #' Prints `mp_variable` class
 #'
 #' @export
-`print.mp_variable` <- function(x, ...) {
-    ulid <- cli::cli_ul()
-    cli::cli_li('name   = {x$name}')
-    cli::cli_li('weight = {x$weight}')
-    cli::cli_li('mean   = {x$mean}')
-    cli::cli_li('sd     = {x$sd}')
-    if (is.null(x$icc)) {
-        cli::cli_li('icc    = NULL')
-    } else {
-        cli::cli_li('icc    = {x$icc}')
-    }
-    cli::cli_end(ulid)
+print.mp_variable <- function(x, ...) {
+    cli::cli_ul(
+        c(
+            'name   = {x$name}',
+            'weight = {x$weight}',
+            'mean   = {x$mean}',
+            'sd     = {x$sd}',
+            if (is.null(x$icc))
+                'icc    = NULL'
+            else
+                'icc    = {x$icc}'
+        )
+    )
     invisible(x)
 }
 
-
+#' Converts a `mp_variable` class into a single row `data.frame`
+#'
+#' @export
+as.data.frame.mp_variable <- function(x) {
+    as.data.frame(
+        within(c(x), {
+            icc  <- if (is.null(icc)) '' else if (is.na(icc)) 'NA' else icc
+            level <- levels(x)
+            type <- if ('mp_timevar' %in% class(x)) 'timevar'
+            else if ('mp_binary' %in% class(x)) 'binary'
+            else 'continuous'
+        })
+    )
+}
 
