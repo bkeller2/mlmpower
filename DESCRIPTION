@@ -1,7 +1,7 @@
 Package: mlmpower
 Type: Package
 Title: Power Analysis and Data Simulation for Multilevel Models
-Version: 0.1.2
+Version: 0.1.3
 Author: Brian T. Keller
 Maintainer: Brian T. Keller <bk@utexas.edu>
 Description: An R Package for simulating and completing power analysis for multilevel models
