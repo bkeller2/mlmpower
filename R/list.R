@@ -31,7 +31,7 @@ add.mp_list <- function(x, y) {
 
     # If x is an outcome create model
     if (is.outcome(x)) {
-        return(x |> new_model() |> add(y))
+        return(x |> make_model() |> add(y))
     }
 
     # Check if x is model

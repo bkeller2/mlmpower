@@ -15,7 +15,7 @@ valid_variable_type <- function(x) {
 #' Generate Base variable for mlmpower
 #'
 #' @noRd
-new_variable <- function(type, name, weight, mean, sd, icc) {
+make_variable <- function(type, name, weight, mean, sd, icc) {
     if (missing(name)) {
         cli::cli_abort('Must provide name for {.cls variable}')
     }
@@ -72,7 +72,7 @@ has_variable <- function(x, y) {
 #'
 #' @export
 outcome <- function(name, mean = 0, sd = 1, icc = NULL) {
-    new_variable('outcome', name, NA, mean, sd, icc)
+    make_variable('outcome', name, NA, mean, sd, icc)
 }
 
 #' Validate classes
@@ -96,7 +96,7 @@ within_predictor <- function(name, weight = 1, mean = 0, sd = 1, icc = NULL) {
     else if (icc < 0 | icc > 1) {
         cli::cli_abort('ICC must be between 0.0 and 1.0 in {.cls within_predictor}')
     }
-    new_variable('predictor', name, weight, mean, sd, icc)
+    make_variable('predictor', name, weight, mean, sd, icc)
 }
 
 #' Create within predictor
@@ -105,7 +105,7 @@ within_predictor <- function(name, weight = 1, mean = 0, sd = 1, icc = NULL) {
 within_time_predictor <- function(name, weight = 1, values) {
 
     # TODO validate values
-    v <- new_variable(
+    v <-make_variable(
         c('timevar', 'predictor'),
         name, weight,
         mean(values),
@@ -122,7 +122,7 @@ within_time_predictor <- function(name, weight = 1, values) {
 #' @export
 between_predictor <- function(name, weight = 1, mean = 0, sd = 1) {
     # TODO validate inputs
-    new_variable('predictor', name, weight, mean, sd, NA)
+    make_variable('predictor', name, weight, mean, sd, NA)
 }
 
 #' Create Between binary predictor
@@ -130,7 +130,7 @@ between_predictor <- function(name, weight = 1, mean = 0, sd = 1) {
 #' @export
 between_binary_predictor <- function(name, weight = 1, proportion = 0.5) {
     # TODO validate inputs
-    new_variable(
+    make_variable(
         c('binary', 'predictor'),
         name, weight,
         proportion,
@@ -162,7 +162,7 @@ add.mp_outcome <- function(x, y) {
         return(x)
     }
     # Otherwise create model and add x
-    y |> new_model() |> add(x)
+    y |> make_model() |> add(x)
 }
 
 #' Adds timevar to `mp_base` class

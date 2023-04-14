@@ -87,7 +87,7 @@
 #' a converted `mp_model` object
 #'
 #' @noRd
-new_parameters <- function(model) {
+make_parameters <- function(model) {
     # Convert model to old specification
     model |> with(`_convert`) -> env
 
@@ -285,9 +285,9 @@ new_parameters <- function(model) {
 #' Internal function to solve parameters based on
 #' a converted `mp_model` object across multiple reps
 #' @noRd
-new_parameters_mean <- function(model) {
+make_avg_parameters <- function(model) {
     # Check if fixed and return normally
-    if (is_fixed_cor(model$corrs)) return(model |> new_parameters())
+    if (is_fixed_cor(model$corrs)) return(model |> make_parameters())
 
      # Otherwise find average correlation
 
@@ -302,7 +302,7 @@ new_parameters_mean <- function(model) {
     )
 
     # output parameters
-    new_model |> new_parameters()
+    new_model |> make_parameters()
 }
 
 

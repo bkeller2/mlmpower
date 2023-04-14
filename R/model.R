@@ -1,7 +1,7 @@
 #' Generate Multilevel base class
 #'
 #' @noRd
-new_model <- function(o) {
+make_model <- function(o) {
     # Create environment
     e <- list2env(
         list(
@@ -23,9 +23,9 @@ is.model <- function(x) {
     inherits(x, 'mp_model')
 }
 
-#' Validate `mp_model`
-#' @noRd
-is.valid <- function(x) {
+#' Check if a `mp_model` is properly constructed
+#' @export
+is_valid <- function(x) {
     # TODO check that this is correctly specified
     #  - [ ] Check its a `mp_model` object
     #  - [ ] Check if it has outcome
@@ -61,7 +61,7 @@ clone.mp_model <- function(x) {
 subset.mp_model <- function(x, icc) {
 
     # Validate model first
-    is.valid(x)
+    is_valid(x)
 
     if (!is.number(icc)) {
         cli::cli_abort( 'icc needs to be a single number')
@@ -92,7 +92,7 @@ with.mp_model <- function(data, expr, ...) {
 print.mp_model <- function(x, ...) {
 
     # Validate model first
-    is.valid(x)
+    is_valid(x)
 
     # Print specificaiton
     cli::cli_h2('{.cli mlmpower} model specification')
@@ -152,7 +152,7 @@ print.mp_model <- function(x, ...) {
 summary.mp_model <- function(object, ...) {
 
     # validate model
-    is.valid(object)
+    is_valid(object)
 
     # Get icc
     icc <- object$effect_size$icc
@@ -170,11 +170,11 @@ summary.mp_model <- function(object, ...) {
 
         # Run simulation
         results <- lapply(icc, \(x) {
-            model |> subset(icc = x) |> new_parameters_mean()
+            model |> subset(icc = x) |> make_avg_parameters()
         })
 
     } else {
-        results <- object |> new_parameters_mean()
+        results <- object |> make_avg_parameters()
     }
 
     results # Return results

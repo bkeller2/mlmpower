@@ -45,7 +45,7 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
     )
 
     # Create parameters
-    p <- new_parameters(object)
+    object |> make_parameters() -> p
 
     # useful precomputed values
     N <- n_within * n_between # Total sample size
@@ -273,7 +273,7 @@ power_analysis <- function(
     # Validate inputs
 
     # Validate model
-    is.valid(model)
+    is_valid(model)
 
     if (!is.numeric(n_within)) cli::cli_abort(
         '{.cli n_within} must be a numeric vector'
