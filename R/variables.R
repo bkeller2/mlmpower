@@ -43,6 +43,20 @@ make_variable <- function(type, name, weight, mean, sd, icc) {
             'x' = 'Variable names cannot contain spaces.'
         ))
     }
+    if (!is.number(weight)) cli::cli_abort(
+        'The weight must be a single number for {.cls variable} ({name})'
+    )
+    if (!is.number(mean)) cli::cli_abort(
+        'The mean must be a single number for {.cls variable} ({name})'
+    )
+    if (!is.number(sd)) cli::cli_abort(
+        'The standard deviation must be a single number for {.cls variable} ({name})'
+    )
+    if (!is.number(sd)) cli::cli_abort(
+        'The standard deviation must be a single number for {.cls variable} ({name})'
+    )
+
+    # Return variable
     structure(
         list(
             name = name,
@@ -105,7 +119,7 @@ within_predictor <- function(name, weight = 1, mean = 0, sd = 1, icc = NULL) {
 within_time_predictor <- function(name, weight = 1, values) {
 
     # TODO validate values
-    v <-make_variable(
+    v <- make_variable(
         c('timevar', 'predictor'),
         name, weight,
         mean(values),

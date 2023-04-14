@@ -26,13 +26,79 @@ is.model <- function(x) {
 #' Check if a `mp_model` is properly constructed
 #' @export
 is_valid <- function(x) {
-    # TODO check that this is correctly specified
-    #  - [ ] Check its a `mp_model` object
-    #  - [ ] Check if it has outcome
-    #  - [ ] Check if it has effect size
-    #  - [ ] Check valid effect size
-    #    - (icc, proper predictors based on r2, etc)
 
+    # Check that it is a model
+    if (!is.model(x)) cli::cli_abort(c(
+        'The {.cli model} object is not properly constructed.',
+        'x' = 'The object is not of class {.cli mp_model}'
+    ))
+
+    # Get effect size
+    es <- x$effect_size
+
+    # Check if was specified and any null icc in predictors
+    if (is.null(es$icc))  {
+        sel <- vapply(x$predicors, \(.) is.null(.$icc), logical(1L))
+        if (sum(sel) != 0) cli::cli_abort(c(
+            'The {.cli model} object is not properly constructed.',
+            'x' = 'The ICC was never specified for the model.'
+        ))
+    }
+
+    # Check if random slopes exist with non 0 effect size
+    if (es$random_slope > 0) {
+        sel <- vapply(x$actions, \(.) .$type == "random_slope", logical(1L))
+        if (sum(sel) == 0) cli::cli_abort(c(
+            'The {.cli model} object is not properly constructed.',
+            'x' = 'An effect size for random slopes was specified with no random slopes.'
+        ))
+    }
+
+    # Check if product exist with non 0 effect size
+    if (es$product > 0) {
+        sel <- vapply(x$actions, \(.) .$type == "product", logical(1L))
+        if (sum(sel) == 0) cli::cli_abort(c(
+            'The {.cli model} object is not properly constructed.',
+            'x' = 'An effect size for products was specified with no products.'
+        ))
+    }
+
+    # Check if level-1 exist with non 0 effect size
+    if (es$within > 0) {
+        sel <- vapply(x$predictors, levels, numeric(1L)) == 1
+        if (sum(sel) == 0) cli::cli_abort(c(
+            'The {.cli model} object is not properly constructed.',
+            'x' = 'An effect size for within was specified with no within predictors.'
+        ))
+    }
+
+    # Check if level-1 exist with non 0 effect size
+    if (es$between > 0) {
+        sel <- vapply(x$predictors, levels, numeric(1L)) == 2
+        if (sum(sel) == 0) cli::cli_abort(c(
+            'The {.cli model} object is not properly constructed.',
+            'x' = 'An effect size for between was specified with no between predictors.'
+        ))
+    }
+
+    # Check if effect sizes don't sum to 1 or greater
+    total <- sum(es$within + es$between + es$product + es$random_slope)
+    if (total >= 1) {
+        cli::cli_abort(c(
+            'The {.cli model} object is not properly constructed.',
+            'x' = 'The total ({total}) effect size is greater or equal to 1'
+        ))
+    }
+
+    # Check if r2 between is too large based on icc
+    for (icc in (if (is.null(x$outcome$icc)) es$icc else outcome$icc)) {
+        if (es$between >= icc) cli::cli_abort(c(
+            'The {.cli model} object is not properly constructed.',
+            'x' = 'The between effect size is greater or equal to the ICC'
+        ))
+    }
+
+    # Return object if valid
     invisible(x)
 }
 

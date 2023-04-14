@@ -346,12 +346,13 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
         paste0("cgm(", names(x$mean_W), ")")
     }
 
-    # TODO deal with binary
+    # Create products
     var_prod <- unlist(lapply(var_l1, \(x) {
         vapply(var_l2, \(w) {
             paste0(x, ":", w)
         }, character(1L))
     }))
+
     # Set between to 0 so its dropped
     gammas[seq_len(n_l1) + (1 + n_l1 + n_l1 * n_l2)][cgm_sel] <- 0
 

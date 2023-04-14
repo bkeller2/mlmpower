@@ -3,7 +3,27 @@
 #' @export
 simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
 
-    # TODO validate inputs
+    # Validate Inputs
+    object |> is_valid()
+
+    if (!is.number(n_within)) cli::cli_abort(
+        "{.cli n_within} must be a single integer >= 1."
+    )
+    if (!is.number(n_between)) cli::cli_abort(
+        "{.cli n_between} must be a single integer >= 1."
+    )
+    if (!is.number(n_sim)) cli::cli_abort(
+        "{.cli n_sim} must be a single integer >= 1."
+    )
+    if (n_within < 1) cli::cli_abort(
+        "{.cli n_within} must be a single integer >= 1."
+    )
+    if (n_between < 1) cli::cli_abort(
+        "{.cli n_between} must be a single integer >= 1."
+    )
+    if (n_sim < 1) cli::cli_abort(
+        "{.cli n_sim} must be a single integer >= 1."
+    )
 
     # Obtain levels
     lvls <- vapply(object$predictors, levels, numeric(1L))
@@ -211,6 +231,28 @@ analyze <- function(model, n_within, n_between, alpha = 0.05) {
         replications,
         n_within,
         n_between) {
+
+    # Validate Inputs
+    object |> is_valid()
+
+    if (!is.number(n_within)) cli::cli_abort(
+        "{.cli n_within} must be a single integer >= 1."
+    )
+    if (!is.number(n_between)) cli::cli_abort(
+        "{.cli n_between} must be a single integer >= 1."
+    )
+    if (!is.number(replications)) cli::cli_abort(
+        "{.cli replications} must be a single integer >= 2."
+    )
+    if (n_within < 1) cli::cli_abort(
+        "{.cli n_within} must be a single integer >= 1."
+    )
+    if (n_between < 1) cli::cli_abort(
+        "{.cli n_between} must be a single integer >= 1."
+    )
+    if (replications < 2) cli::cli_abort(
+        "{.cli n_sim} must be a single integer >= 2."
+    )
 
     # Run reps and include progress bar
     results <- lapply(
