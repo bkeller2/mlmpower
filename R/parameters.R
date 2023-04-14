@@ -215,6 +215,16 @@ make_parameters <- function(model) {
         s <- t(model_mean_X) %*% tau_ranslopes %*% model_mean_X
         tau00 <- 0.5 * (-2 * b + a^2 - 2 * s + 2 * var_Y_b) + 0.5 * sqrt(-4 * b * a^2 + a^4 - 4 * a^2 * s + 4 * a^2 * var_Y_b)
 
+        # Check if tau00 is positive
+        if (tau00 < 0) {
+            throw_error(c(
+                'The random intercept variance is negative.',
+                'x' = 'This is caused because the effect size specified are impossible.',
+                'i' = 'The between effect size is most likely too large compared to the ICC.',
+                '>' = 'ICC = {icc_Y} and Between R2 = {R2_increment_b}'
+            ))
+        }
+
         # compute intercept-slope covariance and construct tau matrix
         tau <- diagonal(sqrt(c(tau00, var_ranslopes))) %*% cor_raneffects %*% diagonal(sqrt(c(tau00, var_ranslopes)))
         cor_raneffects[tau == 0] <- 0
@@ -224,22 +234,6 @@ make_parameters <- function(model) {
         means <- c(model_mean_X, rep(0, num_X + num_W + num_X*num_W)) # Set all W means to 0
         gamma00 <- mean_Y - c(gamma_w, gamma_b) %*% means
         gammas <- c(gamma00, gamma_w, gamma_b)
-
-        # TODO figure out way to check for invalid R2
-        # R-square summary
-        check_var_Y <- t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*% phi_b %*% gamma_b + sum(diagonal(tau[-1, -1] %*% phi_XX_w)) + tau00 + var_e_w
-        R2check_X_w <- t(gamma_X_w) %*% phi_XX_w %*% gamma_X_w / check_var_Y
-        R2check_XW_w <- t(gamma_XW_w) %*% phi_XWwithXW_w %*% gamma_XW_w / check_var_Y
-        R2check_ranslopes_w <- sum(diagonal(tau_ranslopes %*% phi_XX_w)) / check_var_Y
-        R2check_var_e <- ((1 - icc_Y) * var_Y - t(gamma_w) %*% phi_w %*% gamma_w - sum(diagonal(tau_ranslopes %*% phi_XX_w))) / check_var_Y
-        R2check_XW_b <- t(gamma_b) %*% phi_b %*% gamma_b / check_var_Y
-        if (sum(select_weighted) != NROW(phi_b)) {
-            R2check_increment_b <- t(gamma_weighted_b) %*% resvar_W_b %*% gamma_weighted_b / check_var_Y
-        } else {
-            R2check_increment_b <- R2check_XW_b
-        }
-        R2check_totalminusincrement_b <- R2check_XW_b - R2check_increment_b
-        R2check_ranicept <- tau00 / check_var_Y
 
         # variable names
         if (length(names(mean_X)) != 0) {
@@ -265,6 +259,47 @@ make_parameters <- function(model) {
         row.names(params_res) <- c("Res. Var.")
         colnames(params_coeff) <- colnames(params_res) <- "Value"
 
+        # R-square summary
+        check_var_Y <- t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*% phi_b %*% gamma_b + sum(diagonal(tau[-1, -1] %*% phi_XX_w)) + tau00 + var_e_w
+        R2check_X_w <- t(gamma_X_w) %*% phi_XX_w %*% gamma_X_w / check_var_Y
+        R2check_XW_w <- t(gamma_XW_w) %*% phi_XWwithXW_w %*% gamma_XW_w / check_var_Y
+        R2check_ranslopes_w <- sum(diagonal(tau_ranslopes %*% phi_XX_w)) / check_var_Y
+        R2check_var_e <- ((1 - icc_Y) * var_Y - t(gamma_w) %*% phi_w %*% gamma_w - sum(diagonal(tau_ranslopes %*% phi_XX_w))) / check_var_Y
+        R2check_XW_b <- t(gamma_b) %*% phi_b %*% gamma_b / check_var_Y
+        if (sum(select_weighted) != NROW(phi_b)) {
+            R2check_increment_b <- t(gamma_weighted_b) %*% resvar_W_b %*% gamma_weighted_b / check_var_Y
+        } else {
+            R2check_increment_b <- R2check_XW_b
+        }
+        R2check_totalminusincrement_b <- R2check_XW_b - R2check_increment_b
+        R2check_ranicept <- tau00 / check_var_Y
+
+        # Collect r2 summaries
+        r2  <- matrix(
+            c(
+                R2check_X_w,
+                R2check_XW_w,
+                R2check_ranslopes_w,
+                R2check_var_e,
+                R2check_XW_b,
+                R2check_increment_b,
+                R2check_totalminusincrement_b,
+                R2check_ranicept
+            ),
+            dimnames = list(c(
+                "Variance Within-Cluster Fixed Effects",
+                "Variance Cross-Level Interaction Effects",
+                "Variance Random Slopes",
+                "Within-Cluster Error Variance",
+                "Variance Between-Cluster Fixed Effects",
+                "Incremental Variance Level-2 Predictors",
+                "Between Variance Level-1 Covariates",
+                "Variance Random Intercepts"
+            ), 'Proportion')
+        )
+
+
+
         # Return final output
         list(
             mean_Y = mean_Y,
@@ -274,7 +309,8 @@ make_parameters <- function(model) {
             mean_X = mean_X,
             mean_W = mean_W,
             phi_XX_w = phi_XX_w,
-            phi_b = phi_b
+            phi_b = phi_b,
+            r2 = r2
         )
     })
 
