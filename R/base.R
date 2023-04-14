@@ -26,7 +26,7 @@ is.base <- function(x) {
     if (missing(e2)) return(e1)
     # Don't allow two models
     if (is.model(e1) & is.model(e2)) {
-        cli::cli_abort('Cannot add two model sets together.')
+        throw_error('Cannot add two model sets together.')
     }
     # Check if second is models class or outcome
     if (is.model(e2)) return(e2 |> add(e1))

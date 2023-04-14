@@ -6,23 +6,23 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
     # Validate Inputs
     object |> is_valid()
 
-    if (!is.number(n_within)) cli::cli_abort(
-        "{.cli n_within} must be a single integer >= 1."
+    if (!is.number(n_within)) throw_error(
+        "{.arg n_within} must be a single integer >= 1."
     )
-    if (!is.number(n_between)) cli::cli_abort(
-        "{.cli n_between} must be a single integer >= 1."
+    if (!is.number(n_between)) throw_error(
+        "{.arg n_between} must be a single integer >= 1."
     )
-    if (!is.number(n_sim)) cli::cli_abort(
-        "{.cli n_sim} must be a single integer >= 1."
+    if (!is.number(nsim)) throw_error(
+        "{.arg nsim} must be a single integer >= 1."
     )
-    if (n_within < 1) cli::cli_abort(
-        "{.cli n_within} must be a single integer >= 1."
+    if (n_within < 1) throw_error(
+        "{.arg n_within} must be a single integer >= 1."
     )
-    if (n_between < 1) cli::cli_abort(
-        "{.cli n_between} must be a single integer >= 1."
+    if (n_between < 1) throw_error(
+        "{.arg n_between} must be a single integer >= 1."
     )
-    if (n_sim < 1) cli::cli_abort(
-        "{.cli n_sim} must be a single integer >= 1."
+    if (nsim < 1) throw_error(
+        "{.arg nsim} must be a single integer >= 1."
     )
 
     # Obtain levels
@@ -33,7 +33,7 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
         object$predictors[lvls == 1],  # Subset level-1
         \(.)  'mp_timevar' %in% class(.)  # Select timevar
     ))
-    if (sum(timevar_l1) > 1) cli::cli_abort("Only one timevar should be specified")
+    if (sum(timevar_l1) > 1) throw_error("Only one timevar should be specified")
 
     # Change within sample size if timevar specified
     if (TRUE %in% timevar_l1) {
@@ -232,26 +232,12 @@ analyze <- function(model, n_within, n_between, alpha = 0.05) {
         n_within,
         n_between) {
 
-    # Validate Inputs
-    object |> is_valid()
-
-    if (!is.number(n_within)) cli::cli_abort(
-        "{.cli n_within} must be a single integer >= 1."
+    # Double check valid inputs
+    if (n_within < 1) throw_error(
+        "{.arg n_within} must be a single integer >= 1."
     )
-    if (!is.number(n_between)) cli::cli_abort(
-        "{.cli n_between} must be a single integer >= 1."
-    )
-    if (!is.number(replications)) cli::cli_abort(
-        "{.cli replications} must be a single integer >= 2."
-    )
-    if (n_within < 1) cli::cli_abort(
-        "{.cli n_within} must be a single integer >= 1."
-    )
-    if (n_between < 1) cli::cli_abort(
-        "{.cli n_between} must be a single integer >= 1."
-    )
-    if (replications < 2) cli::cli_abort(
-        "{.cli n_sim} must be a single integer >= 2."
+    if (n_between < 1) throw_error(
+        "{.arg n_between} must be a single integer >= 1."
     )
 
     # Run reps and include progress bar
@@ -317,14 +303,14 @@ power_analysis <- function(
     # Validate model
     is_valid(model)
 
-    if (!is.numeric(n_within)) cli::cli_abort(
-        '{.cli n_within} must be a numeric vector'
+    if (!is.numeric(n_within)) throw_error(
+        '{.arg n_within} must be a numeric vector'
     )
-    if (!is.numeric(n_between)) cli::cli_abort(
-        '{.cli n_between} must be a numeric vector'
+    if (!is.numeric(n_between)) throw_error(
+        '{.arg n_between} must be a numeric vector'
     )
-    if (replications < 2) cli::cli_abort(
-        '{.cli replications} must be greater than 1.'
+    if (replications < 2) throw_error(
+        '{.arg replications} must be greater than 1.'
     )
 
     # Get icc
@@ -338,8 +324,8 @@ power_analysis <- function(
     ))
 
     if (missing(n_within)) {
-        if (length(timevars) == 0) cli::cli_abort(
-            '{.cli n_within} is missing with no time variable.'
+        if (length(timevars) == 0) throw_error(
+            '{.arg n_within} is missing with no time variable.'
         )
         n_within <- length(model$predictors[[timevars]]$values)
     } else if (length(timevars) == 1) {
@@ -359,7 +345,7 @@ power_analysis <- function(
         }
     }
     else if (length(timevars) > 1) {
-        cli::cli_abort('Only one time variable is currently allowed.')
+        throw_error('Only one time variable is currently allowed.')
     }
 
     # Run simulation based on all combos

@@ -289,7 +289,7 @@ make_avg_parameters <- function(model) {
     # Check if fixed and return normally
     if (is_fixed_cor(model$corrs)) return(model |> make_parameters())
 
-     # Otherwise find average correlation
+    # Otherwise find average correlation
 
     # Create temp model with default corrs
     new_model <- clone(model)
@@ -405,7 +405,7 @@ print.mp_parameters <- function(x, ...) {
 
     # Don't allow two models
     if (!is.parameters(e1) | !is.parameters(e2)) {
-        cli::cli_abort('Can only average two parameters together')
+        throw_error('Can only average two parameters together')
     }
 
     # Iterate over everything in e1 and e2

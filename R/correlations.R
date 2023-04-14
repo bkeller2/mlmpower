@@ -5,10 +5,15 @@ random <- function(lower, upper) {
     force(upper)
     # lower < upper ifnot error
     if (lower >= upper) {
-        cli::cli_abort(
-            'lower must be less than upper in {.cls random}'
-        )
+        throw_error('{.arg lower} must be less than upper in in {.fun random}')
     }
+    if (lower < -1 | lower > 1) {
+        throw_error('{.arg lower} must be between -1 and 1 in {.fun random}')
+    }
+    if (upper < -1 | upper > 1) {
+        throw_error('{.arg upper} must be between -1 and 1 in {.fun random}')
+    }
+
     `_fixed` <- FALSE
     `_call`  <- call('random', lower, upper)
     `_mean`  <- mean(lower, upper)
@@ -25,6 +30,10 @@ fixed <- function(value) {
     `_fixed` <- TRUE
     `_call`  <- call('fixed', value)
     `_mean`  <- value
+
+    if (value < -1 | value > 1) {
+        throw_error('{.arg value} must be between -1 and 1 in {.fun fixed}')
+    }
     structure(
         function(n) rep(value, n),
         class = c('mp_corr_func', 'function')
@@ -97,14 +106,14 @@ correlations <- function(
     if (is.number(randeff_cor)) randeff_cor <- fixed(randeff_cor)
 
     # Validate that they are corr funcs
-    if (!is.corr_func(within_cor)) cli::cli_abort(
-        '{.cli within_cor} must be a single number or created via `fixed` or `random` functions'
+    if (!is.corr_func(within_cor)) throw_error(
+        '{.arg within_cor} must be a single number or created via {.fun fixed} or {.fun random}'
     )
-    if (!is.corr_func(between_cor))  cli::cli_abort(
-        '{.cli between_cor} must be a single number or created via `fixed` or `random` functions'
+    if (!is.corr_func(between_cor)) throw_error(
+        '{.arg between_cor} must be a single number or created via {.fun fixed} or {.fun random}'
     )
-    if (!is.corr_func(randeff_cor))  cli::cli_abort(
-        '{.cli randeff_cor} must be a single number or created via `fixed` or `random` functions'
+    if (!is.corr_func(randeff_cor)) throw_error(
+        '{.arg randeff_cor} must be a single number or created via {.fun fixed} or {.fun random}'
     )
     # Construct correlations object
     mp_correlations(within_cor, between_cor, randeff_cor)

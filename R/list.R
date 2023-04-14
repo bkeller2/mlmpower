@@ -46,7 +46,7 @@ add.mp_list <- function(x, y) {
     # Otherwise
     # Validate
     if (!is.base(x)) {
-        cli::cli_abort('Must provide base class in {.cls mp_list}')
+        throw_error('Must provide base class in {.cls mp_list}')
     }
 
     # Otherwise append and return list

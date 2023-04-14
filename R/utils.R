@@ -132,7 +132,7 @@ online_mean <- function(e1, e2) {
 
     # Check they are same classes
     if (!identical(class(e1), class(e2))) {
-        cli::cli_abort('The two must have identical classes')
+        throw_error('The two must have identical classes')
     }
     e1_count <- attr(e1, '_count')
     e2_count <- attr(e2, '_count')
@@ -175,5 +175,12 @@ diagonal <- function(x) {
 cmap <- function(f, ...) {
     l <- expand.grid(..., stringsAsFactors=FALSE)
     do.call(mapply, c(FUN = f, l, SIMPLIFY = FALSE))
+}
+
+#' Internal error function
+#' Wrapper for `cli_abort` to not specify the call
+#' @noRd
+throw_error <- function(message, ..., .envir = parent.frame(), .frame = .envir) {
+    cli::cli_abort(message, ..., .envir = .envir, .frame = .frame, call = NULL)
 }
 

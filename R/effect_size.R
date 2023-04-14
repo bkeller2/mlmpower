@@ -18,13 +18,13 @@ valid_effect_type <- function(x) {
 #' @noRd
 new_effsize <- function(type, value) {
     if (missing(type)) {
-        cli::cli_abort('Must provide effect size type for {.cls mp_effect}')
+        throw_error('Must provide effect size type for {.cls mp_effect}')
     }
     if (!valid_effect_type(type)) {
-        cli::cli_abort('Invalid type for {.cls mp_effect}')
+        throw_error('Invalid type for {.cls mp_effect}')
     }
     if (type != 'icc' & !is.number(value)) {
-        cli::cli_abort(paste0('Effect size for {.cls ', type, '} must be a single number.' ))
+        throw_error(paste0('Effect size for {.cls ', type, '} must be a single number.' ))
     }
     # evaluate if it is a function
     if (is.function(value)) {
@@ -35,14 +35,14 @@ new_effsize <- function(type, value) {
         for (i in value) {
             if (is.number(i)) {
                 if (i < 0 | i > 1) {
-                    cli::cli_abort(paste0('Invalid effect size for {.cls ', type, '}' ))
+                    throw_error(paste0('Invalid effect size for {.cls ', type, '}' ))
                 }
             } else {
-                cli::cli_abort(paste0('Effect size for {.cls ', type, '} must be a single number' ))
+                throw_error(paste0('Effect size for {.cls ', type, '} must be a single number' ))
             }
         }
     } else {
-        cli::cli_abort(paste0('Invalid effect size for {.cls ', type, '}' ))
+        throw_error(paste0('Invalid effect size for {.cls ', type, '}' ))
     }
     # Create new effect sizes
     structure(
@@ -138,7 +138,7 @@ longitudinal <- function() {
 #' Adds effect size to `mp_base` class
 #'
 #' @noRd
-`add.mp_effect` <- function(x, y) {
+add.mp_effect <- function(x, y) {
     # Add as effect size if model
     if (is.model(x)) {
         x$effect_size[[y$type]] <- y$value
@@ -152,10 +152,27 @@ longitudinal <- function() {
 #' Prints `mp_effect` class
 #'
 #' @export
-`print.mp_effect` <- function(x, ...) {
+print.mp_effect <- function(x, ...) {
     ulid <- cli::cli_ul()
     cli::cli_li('type   = {x$type}')
     cli::cli_li('value  = {x$value}')
     cli::cli_end(ulid)
+    invisible(x)
+}
+
+
+#' Prints `mp_effsize` class
+#'
+#' @export
+print.mp_effsize <- function(x, ...) {
+    cli::cli_ul(
+        c(
+            'GLOBAL ICC = {x$icc}',
+            'WITHIN = {x$within}',
+            'BETWEEN = {x$between}',
+            'RANDOM SLOPE = {x$random_slope}',
+            'PRODUCT = {x$product}'
+        )
+    )
     invisible(x)
 }

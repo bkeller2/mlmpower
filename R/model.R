@@ -28,9 +28,9 @@ is.model <- function(x) {
 is_valid <- function(x) {
 
     # Check that it is a model
-    if (!is.model(x)) cli::cli_abort(c(
-        'The {.cli model} object is not properly constructed.',
-        'x' = 'The object is not of class {.cli mp_model}'
+    if (!is.model(x)) throw_error(c(
+        'The {.cls model} object is not properly constructed.',
+        'x' = 'The object is not of class {.cls mp_model}'
     ))
 
     # Get effect size
@@ -39,8 +39,8 @@ is_valid <- function(x) {
     # Check if was specified and any null icc in predictors
     if (is.null(es$icc))  {
         sel <- vapply(x$predicors, \(.) is.null(.$icc), logical(1L))
-        if (sum(sel) != 0) cli::cli_abort(c(
-            'The {.cli model} object is not properly constructed.',
+        if (sum(sel) != 0) throw_error(c(
+            'The {.cls model} object is not properly constructed.',
             'x' = 'The ICC was never specified for the model.'
         ))
     }
@@ -48,8 +48,8 @@ is_valid <- function(x) {
     # Check if random slopes exist with non 0 effect size
     if (es$random_slope > 0) {
         sel <- vapply(x$actions, \(.) .$type == "random_slope", logical(1L))
-        if (sum(sel) == 0) cli::cli_abort(c(
-            'The {.cli model} object is not properly constructed.',
+        if (sum(sel) == 0) throw_error(c(
+            'The {.cls model} object is not properly constructed.',
             'x' = 'An effect size for random slopes was specified with no random slopes.'
         ))
     }
@@ -57,8 +57,8 @@ is_valid <- function(x) {
     # Check if product exist with non 0 effect size
     if (es$product > 0) {
         sel <- vapply(x$actions, \(.) .$type == "product", logical(1L))
-        if (sum(sel) == 0) cli::cli_abort(c(
-            'The {.cli model} object is not properly constructed.',
+        if (sum(sel) == 0) throw_error(c(
+            'The {.cls model} object is not properly constructed.',
             'x' = 'An effect size for products was specified with no products.'
         ))
     }
@@ -66,8 +66,8 @@ is_valid <- function(x) {
     # Check if level-1 exist with non 0 effect size
     if (es$within > 0) {
         sel <- vapply(x$predictors, levels, numeric(1L)) == 1
-        if (sum(sel) == 0) cli::cli_abort(c(
-            'The {.cli model} object is not properly constructed.',
+        if (sum(sel) == 0) throw_error(c(
+            'The {.cls model} object is not properly constructed.',
             'x' = 'An effect size for within was specified with no within predictors.'
         ))
     }
@@ -75,8 +75,8 @@ is_valid <- function(x) {
     # Check if level-1 exist with non 0 effect size
     if (es$between > 0) {
         sel <- vapply(x$predictors, levels, numeric(1L)) == 2
-        if (sum(sel) == 0) cli::cli_abort(c(
-            'The {.cli model} object is not properly constructed.',
+        if (sum(sel) == 0) throw_error(c(
+            'The {.cls model} object is not properly constructed.',
             'x' = 'An effect size for between was specified with no between predictors.'
         ))
     }
@@ -84,16 +84,16 @@ is_valid <- function(x) {
     # Check if effect sizes don't sum to 1 or greater
     total <- sum(es$within + es$between + es$product + es$random_slope)
     if (total >= 1) {
-        cli::cli_abort(c(
-            'The {.cli model} object is not properly constructed.',
+        throw_error(c(
+            'The {.cls model} object is not properly constructed.',
             'x' = 'The total ({total}) effect size is greater or equal to 1'
         ))
     }
 
     # Check if r2 between is too large based on icc
     for (icc in (if (is.null(x$outcome$icc)) es$icc else outcome$icc)) {
-        if (es$between >= icc) cli::cli_abort(c(
-            'The {.cli model} object is not properly constructed.',
+        if (es$between >= icc) throw_error(c(
+            'The {.cls model} object is not properly constructed.',
             'x' = 'The between effect size is greater or equal to the ICC'
         ))
     }
@@ -130,10 +130,10 @@ subset.mp_model <- function(x, icc) {
     is_valid(x)
 
     if (!is.number(icc)) {
-        cli::cli_abort( 'icc needs to be a single number')
+        throw_error( 'icc needs to be a single number')
     }
     else if ( !(icc %in% x$effect_size$icc)) {
-        cli::cli_abort( 'icc is not in {.cli mp_model}')
+        throw_error( 'icc is not in {.cls mp_model}')
     }
     new_x <- clone(x)
     new_x$effect_size <- clone(x$effect_size)
@@ -145,7 +145,7 @@ subset.mp_model <- function(x, icc) {
 #' @export
 with.mp_model <- function(data, expr, ...) {
     if (!is.function(expr)) {
-        cli::cli_abort('Second argument must be function')
+        throw_error('Second argument must be function')
     }
     environment(expr) <- data
     expr(...)
@@ -190,15 +190,7 @@ print.mp_model <- function(x, ...) {
 
     cli::cli_h3('{.cli effect sizes}')
     cli::cli_text('')
-    cli::cli_ul(
-        c(
-            'GLOBAL ICC = {x$effect_size$icc}',
-            'WITHIN = {x$effect_size$within}',
-            'BETWEEN = {x$effect_size$between}',
-            'RANDOM SLOPE = {x$effect_size$random_slope}',
-            'PRODUCT = {x$effect_size$product}'
-        )
-    )
+    print(x$effect_size)
 
     cli::cli_h3('{.cli correlations}')
     cli::cli_text('')
