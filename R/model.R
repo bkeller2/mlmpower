@@ -170,18 +170,18 @@ print.mp_model <- function(x, ...) {
     print(
         do.call(
             'rbind',
-            lapply(model$predictors, as.data.frame)
+            lapply(x$predictors, as.data.frame)
         )[, c('level', 'icc', 'weight', 'type')],
         right = FALSE
     )
 
-    if (length(model$actions) > 0) {
+    if (length(x$actions) > 0) {
         cli::cli_h3('{.cli model specifications}')
         cli::cli_text('')
         print(
             do.call(
                 'rbind',
-                lapply(model$actions, as.data.frame)
+                lapply(x$actions, as.data.frame)
             ),
             right = FALSE,
             row.names = FALSE
@@ -228,7 +228,7 @@ summary.mp_model <- function(object, ...) {
 
         # Run simulation
         results <- lapply(icc, \(x) {
-            model |> subset(icc = x) |> make_avg_parameters()
+            object |> subset(icc = x) |> make_avg_parameters()
         })
 
     } else {
