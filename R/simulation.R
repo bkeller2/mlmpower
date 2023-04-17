@@ -132,7 +132,7 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
             X_b[ , bin_select[i]] <- ifelse(
                 X_b[ , bin_select[i]] < thresh[i],
                 0.0, 1.0
-            ) - p$mean_Z[binary_l2] # Subtract mean for centering
+            ) - p$mean_Z[seq_len(l2)[i]] # Subtract mean for centering
         }
     }
 
