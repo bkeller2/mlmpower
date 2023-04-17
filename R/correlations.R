@@ -16,7 +16,7 @@ random <- function(lower, upper) {
 
     `_fixed` <- FALSE
     `_call`  <- call('random', lower, upper)
-    `_mean`  <- mean(lower, upper)
+    `_mean`  <- mean(c(lower, upper))
     structure(
         function(n) runif(n, lower, upper),
         class = c('mp_corr_func', 'function')
