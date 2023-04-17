@@ -70,7 +70,7 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
     # useful precomputed values
     N <- n_within * n_between # Total sample size
     l1 <- length(p$mean_X)
-    l2 <- length(p$mean_W)
+    l2 <- length(p$mean_Z)
 
     # Generate ID variable
     `_id` <- seq_len(n_between) %x% matrix(1, n_within)
@@ -90,17 +90,17 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
         # Generate X's conditional on timevars
         if (l1 > 1) {
             cond_var <- (
-                p$phi_XX_w[ !timevar_l1, !timevar_l1, drop = F]
-                - p$phi_XX_w[!timevar_l1, timevar_l1, drop = F]
+                p$phi_w[ !timevar_l1, !timevar_l1, drop = F]
+                - p$phi_w[!timevar_l1, timevar_l1, drop = F]
                 %*% solve(
-                    p$phi_XX_w[timevar_l1, timevar_l1, drop = F],
-                    p$phi_XX_w[timevar_l1, !timevar_l1, drop = F]
+                    p$phi_w[timevar_l1, timevar_l1, drop = F],
+                    p$phi_w[timevar_l1, !timevar_l1, drop = F]
                 )
             )
             cond_mean <- t(
-                p$phi_XX_w[!timevar_l1, timevar_l1, drop = F]
+                p$phi_w[!timevar_l1, timevar_l1, drop = F]
                 %*% solve(
-                    p$phi_XX_w[timevar_l1, timevar_l1, drop = F],
+                    p$phi_w[timevar_l1, timevar_l1, drop = F],
                     t(X_w[,  timevar_l1] - p$mean_X[timevar_l1, drop = F])
                 )
             )
@@ -117,7 +117,7 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
         )[`_id`, , drop = F]
 
     } else {
-        X_w <- rmvnorm_nomean(N, p$phi_XX_w)
+        X_w <- rmvnorm_nomean(N, p$phi_w)
         X_b <- rmvnorm(N, c(p$mean_X, rep(0, l2)), p$phi_b)[`_id`, , drop = F]
     }
 
@@ -126,13 +126,13 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
         bin_select <- seq_len(l2)[binary_l2] + l1
         X_binary <- X_b[ , bin_select, drop = F]
         # Obtain thresholds
-        thresh <- qnorm(p$mean_W[binary_l2], sd = sqrt(diag(p$phi_b)[bin_select]))
+        thresh <- qnorm(p$mean_Z[binary_l2], sd = sqrt(diag(p$phi_b)[bin_select]))
         # Generate data
         for (i in seq_along(thresh)) {
             X_b[ , bin_select[i]] <- ifelse(
                 X_b[ , bin_select[i]] < thresh[i],
                 0.0, 1.0
-            ) - p$mean_W[binary_l2] # Subtract mean for centering
+            ) - p$mean_Z[binary_l2] # Subtract mean for centering
         }
     }
 
@@ -161,9 +161,9 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
         Y,
         X_w + X_b[ , seq_len(l1), drop = F],
         (X_b[ , seq_len(l2) + l1, drop = F]
-         # Add means for W
+         # Add means for Z
          + matrix(
-             ifelse(binary_l2, 0, p$mean_W),
+             ifelse(binary_l2, 0, p$mean_Z),
              nrow = N,
              ncol = l2,
              byrow = T
@@ -281,7 +281,7 @@ analyze <- function(model, n_within, n_between, alpha = 0.05) {
                 sampling_sd = apply(e, 1, sd),
                 mc_moe = mc_error(e, rowMeans)
             ),
-            mean_parameters = p
+            mean_parameters = p |> clean_parameters()
         ),
         class = c('mp_power', 'mp_base')
     )

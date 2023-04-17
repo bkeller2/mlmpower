@@ -227,13 +227,12 @@ summary.mp_model <- function(object, ...) {
         names(icc) <- paste0('icc = ', icc)
 
         # Run simulation
-        results <- lapply(icc, \(x) {
-            object |> subset(icc = x) |> make_avg_parameters()
-        })
-
-    } else {
-        results <- object |> make_avg_parameters()
+        return(
+            lapply(icc, \(x) {
+                object |> subset(icc = x) |> make_avg_parameters() |> clean_parameters()
+            })
+        )
     }
-
-    results # Return results
+    # Otherwise run once and return
+    object |> make_avg_parameters() |> clean_parameters()
 }

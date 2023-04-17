@@ -32,7 +32,7 @@
         mean_Y <- outcome$mean
         names(mean_Y) <- outcome$name
         mean_X <- vapply(predictors[l1], \(.) .$mean, numeric(1L))
-        mean_W <- vapply(predictors[l2], \(.) .$mean, numeric(1L))
+        mean_Z <- vapply(predictors[l2], \(.) .$mean, numeric(1L))
 
         # Get model implied means of X based on centering
         model_mean_X <- ifelse(
@@ -43,11 +43,11 @@
         # Get variances
         var_Y <- outcome$sd^2
         var_X <- vapply(predictors[l1], \(.) .$sd^2, numeric(1L))
-        var_W <- vapply(predictors[l2], \(.) .$sd^2, numeric(1L))
+        var_Z <- vapply(predictors[l2], \(.) .$sd^2, numeric(1L))
         # Get correlations
         corr_X <- corrs$within_cor
-        corr_W <- corrs$between_cor
-        corr_X_W <- corrs$between_cor
+        corr_Z <- corrs$between_cor
+        corr_X_Z <- corrs$between_cor
         corr_raneffects <- corrs$randeff_cor
         # Get icc (Assumes only one)
         icc_Y <- if (is.null(outcome$icc)) effect_size$icc else outcome$icc
@@ -58,23 +58,23 @@
         R2_X_w <- effect_size$within
         R2_increment_b <- effect_size$between
         R2_XXproduct_w <- NULL # Place holders (not used currently)
-        R2_WWproduct_b <- NULL # Place holders (not used currently)
-        R2_XWproduct_w <- effect_size$product
+        R2_ZZproduct_b <- NULL # Place holders (not used currently)
+        R2_XZproduct_w <- effect_size$product
         R2_ranslopes_w <- effect_size$random_slope
 
         # Get weights
         weights_X_w <- vapply(predictors[l1], \(.) .$weight, numeric(1L))
         weights_XXproduct_w <- NULL # Place holders (not used currently)
-        weights_WWproduct_b <- NULL # Place holders (not used currently)
-        weights_XWproduct_w <- c(pmat)
+        weights_ZZproduct_b <- NULL # Place holders (not used currently)
+        weights_XZproduct_w <- c(pmat)
         weights_ranslopes_w <- rvec
         weights_increment_b <- c(
             vapply(icc_X, \(.) if (. == 0) 0 else NA, numeric(1L)),
             vapply(predictors[l2], \(.) .$weight, numeric(1L))
         )
 
-        # Set binary W for level2
-        binary_W <- vapply(predictors[l2], \(.) {
+        # Set binary Z for level2
+        binary_Z <- vapply(predictors[l2], \(.) {
             if ("mp_binary" %in% class(.)) .$mean else 0.0
         }, numeric(1L))
     })
@@ -84,7 +84,7 @@
 }
 
 #' Internal function to solve parameters based on
-#' a converted `mp_model` object
+#' a converted `mp_model` object.
 #'
 #' @noRd
 make_parameters <- function(model) {
@@ -95,10 +95,10 @@ make_parameters <- function(model) {
     l <- with(env, {
         # variable counts
         num_X <- length(mean_X)
-        num_W <- length(var_W)
+        num_Z <- length(var_Z)
 
         # set binary variable variance
-        var_W[binary_W > 0 & binary_W < 1] <- binary_W[binary_W > 0 & binary_W < 1] * (1 - binary_W[binary_W > 0 & binary_W < 1])
+        var_Z[binary_Z > 0 & binary_Z < 1] <- binary_Z[binary_Z > 0 & binary_Z < 1] * (1 - binary_Z[binary_Z > 0 & binary_Z < 1])
 
         # compute within and between-cluster variances
         icc_X[weights_increment_b[seq_len(num_X)] == 0] <- 0
@@ -115,54 +115,54 @@ make_parameters <- function(model) {
         # construct the between-cluster covariance matrix of X's level-2 group means
         phi_XX_b <- diagonal(sqrt(var_X_b)) %*% cor_XX_w %*% diagonal(sqrt(var_X_b))
 
-        # construct the between-cluster correlation and covariance matrix of the level-2 Ws
-        cor_WW_b <- matrix(1, nrow = num_W, ncol = num_W)
-        cor_WW_b[lower.tri(cor_WW_b)] <- cor_WW_b[upper.tri(cor_WW_b)] <- corr_W(num_W * (num_W - 1) / 2)
-        phi_WW_b <- diagonal(sqrt(var_W)) %*% cor_WW_b %*% diagonal(sqrt(var_W))
+        # construct the between-cluster correlation and covariance matrix of the level-2 Zs
+        cor_ZZ_b <- matrix(1, nrow = num_Z, ncol = num_Z)
+        cor_ZZ_b[lower.tri(cor_ZZ_b)] <- cor_ZZ_b[upper.tri(cor_ZZ_b)] <- corr_Z(num_Z * (num_Z - 1) / 2)
+        phi_ZZ_b <- diagonal(sqrt(var_Z)) %*% cor_ZZ_b %*% diagonal(sqrt(var_Z))
 
         # for binary level-2 variables, convert inputted correlations to point-biserial correlations then to covariances
-        if (is.null(binary_W)) {
-            binary_W_ind <- rep(FALSE, length(var_W))
+        if (is.null(binary_Z)) {
+            binary_Z_ind <- rep(FALSE, length(var_Z))
         } else {
-            binary_W_ind <- binary_W > 0 & binary_W < 1
+            binary_Z_ind <- binary_Z > 0 & binary_Z < 1
         }
-        for (r in seq_len(num_W)) {
-            for (i in seq_len(num_W)) {
-                if (binary_W_ind[r] == T & i != r) {
-                    cor_pointbi <- cor_WW_b[r, i] / sqrt(binary_W[r] * (1 - binary_W[r])) * dnorm(qnorm(binary_W[r]))
-                    cor_WW_b[r, i] <- cor_WW_b[i, r] <- cor_pointbi
-                    phi_WW_b[r, i] <- phi_WW_b[i, r] <- cor_WW_b[r, i] * sqrt(phi_WW_b[r, r] * phi_WW_b[i, i])
+        for (r in seq_len(num_Z)) {
+            for (i in seq_len(num_Z)) {
+                if (binary_Z_ind[r] == T & i != r) {
+                    cor_pointbi <- cor_ZZ_b[r, i] / sqrt(binary_Z[r] * (1 - binary_Z[r])) * dnorm(qnorm(binary_Z[r]))
+                    cor_ZZ_b[r, i] <- cor_ZZ_b[i, r] <- cor_pointbi
+                    phi_ZZ_b[r, i] <- phi_ZZ_b[i, r] <- cor_ZZ_b[r, i] * sqrt(phi_ZZ_b[r, r] * phi_ZZ_b[i, i])
                 }
             }
         }
 
-        # construct the between-cluster covariance matrix of the X cluster means and level-2 Ws
-        cor_XW_b <- matrix(corr_X_W(num_X * num_W), nrow = num_W, ncol = num_X)
-        phi_XW_b <- diagonal(sqrt(var_W)) %*% cor_XW_b %*% diagonal(sqrt(var_X_b))
+        # construct the between-cluster covariance matrix of the X cluster means and level-2 Zs
+        cor_XZ_b <- matrix(corr_X_Z(num_X * num_Z), nrow = num_Z, ncol = num_X)
+        phi_XZ_b <- diagonal(sqrt(var_Z)) %*% cor_XZ_b %*% diagonal(sqrt(var_X_b))
 
         # construct the between-cluster covariance matrix
-        phi_b <- rbind(cbind(phi_XX_b, t(phi_XW_b)), cbind(phi_XW_b, t(phi_WW_b)))
+        phi_b <- rbind(cbind(phi_XX_b, t(phi_XZ_b)), cbind(phi_XZ_b, t(phi_ZZ_b)))
 
         # construct the within-cluster covariance matrix
-        phi_XWwithXW_w <- phi_XX_w %x% phi_WW_b
-        phi_XwithXW_w <- matrix(0, nrow = NROW(phi_XWwithXW_w), ncol = NCOL(phi_XX_w))
-        phi_w <- rbind(cbind(phi_XX_w, t(phi_XwithXW_w)), cbind(phi_XwithXW_w, t(phi_XWwithXW_w)))
+        phi_XZwithXZ_w <- phi_XX_w %x% phi_ZZ_b
+        phi_XwithXZ_w <- matrix(0, nrow = NROW(phi_XZwithXZ_w), ncol = NCOL(phi_XX_w))
+        phi_w <- rbind(cbind(phi_XX_w, t(phi_XwithXZ_w)), cbind(phi_XwithXZ_w, t(phi_XZwithXZ_w)))
 
         # solve for the within-cluster regression coefficients
         weights_scaled <- 1 / sqrt(diagonal(phi_XX_w)) * weights_X_w
         gamma_X_w <- weights_scaled * c(sqrt((var_Y * R2_X_w) / t(weights_scaled) %*% phi_XX_w %*% weights_scaled))
 
         # solve for the cross-level product coefficients
-        weights_scaled <- 1 / sqrt(diagonal(phi_XWwithXW_w)) * weights_XWproduct_w
-        if (sum(weights_XWproduct_w) == 0) {
-            gamma_XW_w <- weights_XWproduct_w
+        weights_scaled <- 1 / sqrt(diagonal(phi_XZwithXZ_w)) * weights_XZproduct_w
+        if (sum(weights_XZproduct_w) == 0) {
+            gamma_XZ_w <- weights_XZproduct_w
         } else {
-            gamma_XW_w <- weights_scaled * c(sqrt((var_Y * R2_XWproduct_w) / t(weights_scaled) %*% phi_XWwithXW_w %*% weights_scaled))
+            gamma_XZ_w <- weights_scaled * c(sqrt((var_Y * R2_XZproduct_w) / t(weights_scaled) %*% phi_XZwithXZ_w %*% weights_scaled))
         }
-        gamma_w <- c(gamma_X_w, gamma_XW_w)
+        gamma_w <- c(gamma_X_w, gamma_XZ_w)
 
         # compute the within-cluster residual variance
-        var_e_w <- (1 - icc_Y - R2_X_w - R2_XWproduct_w - R2_ranslopes_w) * var_Y
+        var_e_w <- (1 - icc_Y - R2_X_w - R2_XZproduct_w - R2_ranslopes_w) * var_Y
 
         # solve for the between-cluster coefficients
         select_weighted <- !is.na(weights_increment_b)
@@ -171,14 +171,14 @@ make_parameters <- function(model) {
             phi_nonweighted_b <- phi_b[select_nonweighted, select_nonweighted, drop = F]
             phi_weighted_b <- phi_b[select_weighted, select_weighted, drop = F]
             phi_covs_b <- phi_b[select_nonweighted, select_weighted, drop = F]
-            resvar_W_b <- phi_weighted_b - t(solve(phi_nonweighted_b) %*% phi_covs_b) %*% phi_covs_b
+            resvar_Z_b <- phi_weighted_b - t(solve(phi_nonweighted_b) %*% phi_covs_b) %*% phi_covs_b
 
             # Predefine and only compute for non zero phi_b
             weights_scaled <- numeric(sum(select_weighted))
-            sel_weight <- diagonal(resvar_W_b) != 0 # Select out only non-zero diagonals
-            weights_scaled[sel_weight] <- 1 / sqrt(diagonal(resvar_W_b)[sel_weight]) * weights_increment_b[select_weighted][sel_weight]
-            gamma_weighted_b <- weights_scaled * c(sqrt((var_Y * R2_increment_b) / t(weights_scaled) %*% resvar_W_b %*% weights_scaled))
-            gamma_b <- c(gamma_w[seq_len(num_X)], rep(0, num_W))
+            sel_weight <- diagonal(resvar_Z_b) != 0 # Select out only non-zero diagonals
+            weights_scaled[sel_weight] <- 1 / sqrt(diagonal(resvar_Z_b)[sel_weight]) * weights_increment_b[select_weighted][sel_weight]
+            gamma_weighted_b <- weights_scaled * c(sqrt((var_Y * R2_increment_b) / t(weights_scaled) %*% resvar_Z_b %*% weights_scaled))
+            gamma_b <- c(gamma_w[seq_len(num_X)], rep(0, num_Z))
             gamma_b[select_weighted] <- gamma_weighted_b
             gamma_nonweighted_b <- gamma_b[select_nonweighted]
         } else {
@@ -230,8 +230,8 @@ make_parameters <- function(model) {
         cor_raneffects[tau == 0] <- 0
 
         # compute fixed intercept and construct coefficient matrix
-        # the mean of the product from Bohrnstedt & Goldberger Equation 3 simplifies because cov(X_w,W) = 0
-        means <- c(model_mean_X, rep(0, num_X + num_W + num_X*num_W)) # Set all W means to 0
+        # the mean of the product from Bohrnstedt & Goldberger Equation 3 simplifies because cov(X_w,Z) = 0
+        means <- c(model_mean_X, rep(0, num_X + num_Z + num_X*num_Z)) # Set all Z means to 0
         gamma00 <- mean_Y - c(gamma_w, gamma_b) %*% means
         gammas <- c(gamma00, gamma_w, gamma_b)
 
@@ -239,14 +239,13 @@ make_parameters <- function(model) {
         if (length(names(mean_X)) != 0) {
             vars_Xw <- paste0(names(mean_X), "_w")
             vars_Xb <- paste0(names(mean_X), "_b")
-            vars_Xt <- paste0(names(mean_X), "_t")
         } else {
-            vars_Xw <- vars_Xb <- vars_Xt <- names(mean_X)
+            vars_Xw <- vars_Xb <- names(mean_X)
         }
-        vars_W <- names(mean_W)
-        vars_W[binary_W_ind == T] <- paste0(vars_W[binary_W_ind == T], "_binary")
-        vars_XW <- unlist(lapply(vars_Xw, \(x) {
-            vapply(vars_W, \(w) {
+        vars_Z <- names(mean_Z)
+        vars_Z[binary_Z_ind == T] <- paste0(vars_Z[binary_Z_ind == T], "_binary")
+        vars_XZ <- unlist(lapply(vars_Xw, \(x) {
+            vapply(vars_Z, \(w) {
                 paste0(x, "*", w)
             }, character(1L))
         }))
@@ -255,33 +254,36 @@ make_parameters <- function(model) {
         params_coeff <- matrix(c(gammas), ncol = 1)
         params_res <- matrix(c(var_e_w), ncol = 1)
         row.names(tau) <- colnames(tau) <- c("Icept", vars_Xw)
-        row.names(params_coeff) <- c("Icept", vars_Xw, vars_XW, vars_Xb, vars_W)
+        row.names(params_coeff) <- c("Icept", vars_Xw, vars_XZ, vars_Xb, vars_Z)
         row.names(params_res) <- c("Res. Var.")
         colnames(params_coeff) <- colnames(params_res) <- "Value"
+        row.names(phi_XX_w) <- colnames(phi_XX_w) <- vars_Xw
+        row.names(phi_b) <- colnames(phi_b) <- c(vars_Xb, vars_Z)
+        row.names(phi_XZwithXZ_w) <- colnames(phi_XZwithXZ_w) <- vars_XZ
 
         # R-square summary
         check_var_Y <- t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*% phi_b %*% gamma_b + sum(diagonal(tau[-1, -1] %*% phi_XX_w)) + tau00 + var_e_w
         R2check_X_w <- t(gamma_X_w) %*% phi_XX_w %*% gamma_X_w / check_var_Y
-        R2check_XW_w <- t(gamma_XW_w) %*% phi_XWwithXW_w %*% gamma_XW_w / check_var_Y
+        R2check_XZ_w <- t(gamma_XZ_w) %*% phi_XZwithXZ_w %*% gamma_XZ_w / check_var_Y
         R2check_ranslopes_w <- sum(diagonal(tau_ranslopes %*% phi_XX_w)) / check_var_Y
         R2check_var_e <- ((1 - icc_Y) * var_Y - t(gamma_w) %*% phi_w %*% gamma_w - sum(diagonal(tau_ranslopes %*% phi_XX_w))) / check_var_Y
-        R2check_XW_b <- t(gamma_b) %*% phi_b %*% gamma_b / check_var_Y
+        R2check_XZ_b <- t(gamma_b) %*% phi_b %*% gamma_b / check_var_Y
         if (sum(select_weighted) != NROW(phi_b)) {
-            R2check_increment_b <- t(gamma_weighted_b) %*% resvar_W_b %*% gamma_weighted_b / check_var_Y
+            R2check_increment_b <- t(gamma_weighted_b) %*% resvar_Z_b %*% gamma_weighted_b / check_var_Y
         } else {
-            R2check_increment_b <- R2check_XW_b
+            R2check_increment_b <- R2check_XZ_b
         }
-        R2check_totalminusincrement_b <- R2check_XW_b - R2check_increment_b
+        R2check_totalminusincrement_b <- R2check_XZ_b - R2check_increment_b
         R2check_ranicept <- tau00 / check_var_Y
 
         # Collect r2 summaries
         r2  <- matrix(
             c(
                 R2check_X_w,
-                R2check_XW_w,
+                R2check_XZ_w,
                 R2check_ranslopes_w,
                 R2check_var_e,
-                R2check_XW_b,
+                R2check_XZ_b,
                 R2check_increment_b,
                 R2check_totalminusincrement_b,
                 R2check_ranicept
@@ -298,7 +300,8 @@ make_parameters <- function(model) {
             ), 'Proportion')
         )
 
-
+        # Subset phi_XZwithXZ_w based on actual requested products
+        phi_XZwithXZ_w <- phi_XZwithXZ_w[gamma_XZ_w != 0, gamma_XZ_w != 0, drop = F]
 
         # Return final output
         list(
@@ -307,8 +310,9 @@ make_parameters <- function(model) {
             tau = tau,
             var_e = params_res,
             mean_X = mean_X,
-            mean_W = mean_W,
-            phi_XX_w = phi_XX_w,
+            mean_Z = mean_Z,
+            phi_w = phi_XX_w,
+            phi_p = phi_XZwithXZ_w,
             phi_b = phi_b,
             r2 = r2
         )
@@ -341,6 +345,17 @@ make_avg_parameters <- function(model) {
     new_model |> make_parameters()
 }
 
+#' Internal function to clean parameters print outs
+#' @noRd
+clean_parameters <- function(x) {
+    # Drop 0 gammas
+    x$gammas <- x$gammas[x$gammas != 0, , drop = F]
+    x$phi_b <- x$phi_b[diag(x$phi_b) != 0, diag(x$phi_b) != 0, drop = F]
+    x$tau <- x$tau[diag(x$tau) != 0, diag(x$tau) != 0, drop = F]
+
+    # Return
+    x
+}
 
 #' Validate parameters
 #' @noRd
@@ -358,7 +373,7 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
 
     # Obtain number of l1 and l2
     n_l1 <- NROW(x$mean_X)
-    n_l2 <- NROW(x$mean_W)
+    n_l2 <- NROW(x$mean_Z)
 
     # Determine which predictors are CGM
     # NOTE Assumes always same regression coefficient means cgm
@@ -376,10 +391,10 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
         var_l1[x$timevar_l1] <- names(x$mean_X[x$timevar_l1])
     }
 
-    var_l2 <- if (length(names(x$mean_W)) == 0) {
+    var_l2 <- if (length(names(x$mean_Z)) == 0) {
         character()
     } else {
-        paste0("cgm(", names(x$mean_W), ")")
+        paste0("cgm(", names(x$mean_Z), ")")
     }
 
     # Create products
