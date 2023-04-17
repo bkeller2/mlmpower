@@ -73,6 +73,12 @@ make_variable <- function(type, name, weight, mean, sd, icc) {
             }
         }
     }
+    if (type[1] != 'outcome') {
+        if (weight < 0) throw_error(c(
+            'Invalid Weight for {.cls variable} ({name}).',
+            'x' = 'Weights cannot be negative.'
+        ))
+    }
 
     # Return variable
     structure(
