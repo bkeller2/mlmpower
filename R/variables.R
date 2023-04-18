@@ -281,6 +281,7 @@ as.data.frame.mp_variable <- function(x) {
             type <- if ('mp_timevar' %in% class(x)) 'timevar'
             else if ('mp_binary' %in% class(x)) 'binary'
             else 'continuous'
+            if ('mp_timevar' %in% class(x)) rm(values) # Remove values
         })
     )
 }
