@@ -8,11 +8,13 @@ is.number <- function(x) {
 #' @noRd
 rmvnorm <- function(n, mu, Sigma) {
     p <- NCOL(Sigma)
-    mean_mat <- matrix(mu, nrow = n, ncol = p, byrow = T)
-    mean_mat + matrix(rnorm(p * n), ncol = p) %*% with(
-        eigen(Sigma, symmetric = TRUE), {
-            t(vectors %*% (t(vectors) * sqrt(pmax(values, 0))))
-        }
+    (matrix(mu, nrow = n, ncol = p, byrow = T)
+        + matrix(rnorm(p * n), ncol = p)
+        %*% with(
+            eigen(Sigma, symmetric = TRUE), {
+                t(vectors %*% (t(vectors) * sqrt(pmax(values, 0))))
+            }
+        )
     )
 }
 
