@@ -348,6 +348,12 @@ make_avg_parameters <- function(model) {
 #' Internal function to clean parameters print outs
 #' @noRd
 clean_parameters <- function(x) {
+
+    # Keep copy of original
+    attr(x, '_gammas') <- x$gammas
+    attr(x, '_phi_b')  <- x$phi_b
+    attr(x, '_tau')    <- x$tau
+
     # Drop 0 gammas
     x$gammas <- x$gammas[x$gammas != 0, , drop = F]
     x$phi_b <- x$phi_b[diag(x$phi_b) != 0, diag(x$phi_b) != 0, drop = F]
@@ -369,7 +375,8 @@ is.parameters <- function(x) {
 to_formula <- function(x, e = globalenv(), nested = FALSE) {
 
     # Get regression coefficients
-    gammas <- x$gammas
+    gammas <- if (is.null(attr(x, '_gammas'))) x$gammas else attr(x, '_gammas')
+    tau    <- if (is.null(attr(x, '_tau')))    x$tau    else attr(x, '_tau')
 
     # Obtain number of l1 and l2
     n_l1 <- NROW(x$mean_X)
@@ -422,7 +429,7 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
     if (nested) {
         model_random <- "(1 | `_id`)"
     } else {
-        raneff_model <- c("1", var_l1[diagonal(x$tau)[-1] != 0])
+        raneff_model <- c("1", var_l1[diagonal(tau)[-1] != 0])
         raneff_model <- paste0(raneff_model, collapse = " + ")
         model_random <- paste0("(", raneff_model, " | ", "`_id`)")
     }
