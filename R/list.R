@@ -37,9 +37,10 @@ add.mp_list <- function(x, y) {
     # Check if x is model
     # Add to model and return
     if (is.model(x)) {
-        for (i in y) {
-            x |> add(i) -> x
-        }
+        # Run actions second to prevent errors
+        actions <- vapply(y, is.action, logical(1))
+        for (i in y[!actions]) x |> add(i) -> x
+        for (i in y[actions])  x |> add(i) -> x
         return(x)
     }
 

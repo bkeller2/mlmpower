@@ -35,7 +35,11 @@ new_action <- function(type, name, weight) {
     )
 }
 
-
+#' Check if it is an `mp_action`
+#' @noRd
+is.action <- function(x) {
+    inherits(x, 'mp_action')
+}
 
 #' Add a random slope
 #'
