@@ -1,7 +1,6 @@
 #' Generate a data set based on `mp_model`
-#' @importFrom stats simulate
 #' @export
-generate <- function(object, n_within, n_between, nsim = 1, ...) {
+generate <- function(object, n_within, n_between, ndata = 1) {
 
     # Validate Inputs
     object |> is_valid()
@@ -12,8 +11,8 @@ generate <- function(object, n_within, n_between, nsim = 1, ...) {
     if (!is.number(n_between)) throw_error(
         "{.arg n_between} must be a single integer >= 1."
     )
-    if (!is.number(nsim)) throw_error(
-        "{.arg nsim} must be a single integer >= 1."
+    if (!is.number(ndata)) throw_error(
+        "{.arg ndata} must be a single integer >= 1."
     )
     if (n_within < 1) throw_error(
         "{.arg n_within} must be a single integer >= 1."
@@ -21,8 +20,8 @@ generate <- function(object, n_within, n_between, nsim = 1, ...) {
     if (n_between < 1) throw_error(
         "{.arg n_between} must be a single integer >= 1."
     )
-    if (nsim < 1) throw_error(
-        "{.arg nsim} must be a single integer >= 1."
+    if (ndata < 1) throw_error(
+        "{.arg ndata} must be a single integer >= 1."
     )
 
     # Obtain levels
@@ -48,10 +47,10 @@ generate <- function(object, n_within, n_between, nsim = 1, ...) {
         }
     }
 
-    # Return list if nsim isn't 1
-    if (nsim > 1) {
+    # Return list if ndata isn't 1
+    if (ndata > 1) {
         return(
-            lapply(seq_len(nsim), \(.) {
+            lapply(seq_len(ndata), \(.) {
                 object |> generate(n_within, n_between)
             })
         )
@@ -179,46 +178,67 @@ generate <- function(object, n_within, n_between, nsim = 1, ...) {
     # Add timevar_l1 to parameters
     p$timevar_l1 <- timevar_l1
     attr(d, 'parameters') <- p
-    return(d)
+
+    # Return data
+    structure(
+        d,
+        class = c('mp_data', 'data.frame')
+    )
+}
+
+#' Check if it is a  list
+#' @noRd
+is.mp_data <- function(x) {
+    inherits(x, 'mp_data')
 }
 
 
-
-#' Internal function to Analyze one replication for `mp_model`
+#' Internal function to analyze one a `mp_data` based on model
 #'
-#' @noRd
-analyze <- function(model, n_within, n_between, alpha = 0.05) {
+#' @export
+analyze <- function(data, alpha = 0.05, ...) {
 
-    # Obtain data
-    model |> generate(n_within, n_between) -> d
+    # Check Inputs
+    if (!is.mp_data(data)) throw_error(
+        "{.arg data} must be of a {.cli mp_data} object."
+    )
+    if (!is.number(alpha)) throw_error(
+        "{.arg alpha} must be a single number between 0 and 1."
+    )
+    if (alpha <= 0 | alpha >= 1) throw_error(
+        "{.arg alpha} must be a single number between 0 and 1."
+    )
 
     # Make centering env
-    e <- centering_env(d$`_id`)
+    e <- centering_env(data$`_id`)
 
     # Get formulas for model
-    attr(d, 'parameters') |> to_formula(e) -> f
-    attr(d, 'parameters') |> to_formula(e, nested = T) -> f_nest
+    attr(data, 'parameters') |> to_formula(e) -> f
+    attr(data, 'parameters') |> to_formula(e, nested = T) -> f_nest
 
     # Fit Model with lme4 and return results
-    full_reml <- quiet(lmerTest::lmer(f, d))
+    full_reml <- quiet(lmerTest::lmer(f, data, ...))
+
     # Obtain LRT
-    if (!identical(f, f_nest)) {
-        full_ml <- quiet(lme4::lmer(f, d, REML = FALSE))
-        nested <- quiet(lme4::lmer(f_nest, d, REML = FALSE))
-        lrt <- varTestnlme::varCompTest(full_ml, nested, pval.comp = "bounds", output = FALSE)
-        rand_result <- c(omnibus_test = lrt$p.value[[4]] < alpha)
-    } else {
-        rand_result <- c(omnibus_test = NA)
+    if (!is.null(alpha)) {
+        if (!identical(f, f_nest)) {
+            full_ml <- quiet(lme4::lmer(f, data, REML = FALSE, ...))
+            nested <- quiet(lme4::lmer(f_nest, data, REML = FALSE, ...))
+            lrt <- varTestnlme::varCompTest(full_ml, nested, pval.comp = "bounds", output = FALSE)
+            rand_result <- c(omnibus_test = lrt$p.value[[4]] < alpha)
+        } else {
+            rand_result <- c(omnibus_test = NA)
+        }
     }
 
     # Return output
     list(
         estimates = full_reml |> extract_results(),
-        sig_test = list(
-            fixed  = coefficients(summary(full_reml) )[,'Pr(>|t|)'] < alpha,
+        sig_test = if (is.null(alpha)) list() else list(
+            fixed  = coefficients(summary(full_reml))[,'Pr(>|t|)'] < alpha,
             random = rand_result
         ),
-        parameters =  attr(d, 'parameters')
+        parameters =  attr(data, 'parameters')
     )
 }
 
@@ -251,7 +271,7 @@ analyze <- function(model, n_within, n_between, alpha = 0.05) {
                 "| ETA: {cli::pb_eta}"
             )
         ), \(.) {
-            model |> analyze(n_within, n_between)
+            model |> generate(n_within, n_between) |> analyze()
         }
     )
 

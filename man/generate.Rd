@@ -4,7 +4,7 @@
 \alias{generate}
 \title{Generate a data set based on `mp_model`}
 \usage{
-generate(object, n_within, n_between, nsim = 1, ...)
+generate(object, n_within, n_between, ndata = 1)
 }
 \description{
 Generate a data set based on `mp_model`
