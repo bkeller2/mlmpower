@@ -199,7 +199,8 @@ make_parameters <- function(model) {
         # solve for the random slope variances
         cor_ranslopes <- cor_raneffects[-1, -1, drop = F]
         tau_trace <- (var_Y * R2_ranslopes_w) / sum(diagonal(cor_ranslopes %*% phi_XX_w %*% diagonal(weights_ranslopes_w)))
-        var_ranslopes <- if (is.finite(tau_trace)) weights_ranslopes_w * tau_trace else rep(0.0, NROW(weights_ranslopes_w))
+        tau_trace <- (var_Y * R2_ranslopes_w) / sum(diag(cor_ranslopes %*% phi_XX_w %*% diag(weights_ranslopes_w / diag(phi_XX_w))))
+        var_ranslopes <- if (is.finite(tau_trace)) weights_ranslopes_w * tau_trace / diag(phi_XX_w) else rep(0.0, NROW(weights_ranslopes_w))
 
         # vector of correlations between random intercept and slopes
         cor_is <- cor_raneffects[-1, 1, drop = F]
