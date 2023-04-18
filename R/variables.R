@@ -109,7 +109,7 @@ has_variable <- function(x, y) {
 #' Create outcome
 #'
 #' @export
-outcome <- function(name, mean = 0, sd = 1, icc = NULL) {
+outcome <- function(name, mean = 10, sd = 5, icc = NULL) {
     make_variable('outcome', name, NA, mean, sd, icc)
 }
 
@@ -137,7 +137,7 @@ within_predictor <- function(name, weight = 1, mean = 0, sd = 1, icc = NULL) {
 #' Create within predictor
 #'
 #' @export
-within_time_predictor <- function(name, weight = 1, values) {
+within_time_predictor <- function(name, values, weight = 1) {
 
     if (!is.numeric(values)) throw_error(
         'Values must be a numeric vector in {.cls within_time_predictor}.'

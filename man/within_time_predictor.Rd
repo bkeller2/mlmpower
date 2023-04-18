@@ -4,7 +4,7 @@
 \alias{within_time_predictor}
 \title{Create within predictor}
 \usage{
-within_time_predictor(name, weight = 1, values)
+within_time_predictor(name, values, weight = 1)
 }
 \description{
 Create within predictor

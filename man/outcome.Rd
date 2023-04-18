@@ -4,7 +4,7 @@
 \alias{outcome}
 \title{Create outcome}
 \usage{
-outcome(name, mean = 0, sd = 1, icc = NULL)
+outcome(name, mean = 10, sd = 5, icc = NULL)
 }
 \description{
 Create outcome
