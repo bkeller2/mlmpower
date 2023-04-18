@@ -168,6 +168,7 @@ as.data.frame.mp_action <- function(x) {
             NA
         ),
         `variable(s)` = paste0(x$name, collapse = ':'),
-        `weight` = x$weight
+        `weight` = x$weight,
+        check.names = FALSE
     )
 }
