@@ -141,9 +141,9 @@ subset.mp_model <- function(x, icc) {
     return(new_x)
 }
 
-#' With binding for `mp_model`
-#' @export
-with.mp_model <- function(data, expr, ...) {
+#' Internal function to call function for a `mp_model`
+#' @noRd
+with_model <- function(data, expr, ...) {
     if (!is.function(expr)) {
         throw_error('Second argument must be function')
     }

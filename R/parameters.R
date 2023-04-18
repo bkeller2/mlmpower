@@ -89,7 +89,7 @@
 #' @noRd
 make_parameters <- function(model) {
     # Convert model to old specification
-    model |> with(`_convert`) -> env
+    model |> with_model(`_convert`) -> env
 
     # Create list using env
     l <- with(env, {
