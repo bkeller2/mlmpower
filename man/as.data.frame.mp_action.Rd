@@ -4,7 +4,7 @@
 \alias{as.data.frame.mp_action}
 \title{Converts a `mp_action` class into a single row `data.frame`}
 \usage{
-\method{as.data.frame}{mp_action}(x)
+\method{as.data.frame}{mp_action}(x, ...)
 }
 \description{
 Converts a `mp_action` class into a single row `data.frame`

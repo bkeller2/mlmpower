@@ -4,7 +4,7 @@
 \alias{subset.mp_model}
 \title{Subset by ICC `mp_model`}
 \usage{
-\method{subset}{mp_model}(x, icc)
+\method{subset}{mp_model}(x, icc, ...)
 }
 \description{
 Subset by ICC `mp_model`

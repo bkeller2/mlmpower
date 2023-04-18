@@ -124,7 +124,7 @@ clone.mp_model <- function(x) {
 #' Subset by ICC `mp_model`
 #'
 #' @export
-subset.mp_model <- function(x, icc) {
+subset.mp_model <- function(x, icc, ...) {
 
     # Validate model first
     is_valid(x)

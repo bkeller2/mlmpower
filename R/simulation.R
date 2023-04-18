@@ -1,7 +1,7 @@
 #' Generate a data set based on `mp_model`
-#'
+#' @importFrom stats simulate
 #' @export
-simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
+generate <- function(object, n_within, n_between, nsim = 1, ...) {
 
     # Validate Inputs
     object |> is_valid()
@@ -52,7 +52,7 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
     if (nsim > 1) {
         return(
             lapply(seq_len(nsim), \(.) {
-                object |> simulate(n_within, n_between)
+                object |> generate(n_within, n_between)
             })
         )
     }
@@ -190,7 +190,7 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
 analyze <- function(model, n_within, n_between, alpha = 0.05) {
 
     # Obtain data
-    model |> simulate(n_within, n_between) -> d
+    model |> generate(n_within, n_between) -> d
 
     # Make centering env
     e <- centering_env(d$`_id`)
@@ -338,7 +338,7 @@ power_analysis <- function(
                     cli::cli_alert_info(
                         "Setting n_within = {len} to match time variable's length"
                     )
-                    alert <- false
+                    alert <- FALSE
                 }
                 n_within[i] <- len
             }

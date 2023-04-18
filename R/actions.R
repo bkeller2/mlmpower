@@ -159,7 +159,7 @@ product <- function(name1, name2, weight = 1) {
 
 #' Converts a `mp_action` class into a single row `data.frame`
 #' @export
-as.data.frame.mp_action <- function(x) {
+as.data.frame.mp_action <- function(x, ...) {
     data.frame(
         `type` = switch(
             x$type,

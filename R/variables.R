@@ -273,7 +273,7 @@ print.mp_variable <- function(x, ...) {
 #' Converts a `mp_variable` class into a single row `data.frame`
 #'
 #' @export
-as.data.frame.mp_variable <- function(x) {
+as.data.frame.mp_variable <- function(x, ...) {
     as.data.frame(
         within(c(x), {
             icc  <- if (is.null(icc)) '' else if (is.na(icc)) 'NA' else icc
