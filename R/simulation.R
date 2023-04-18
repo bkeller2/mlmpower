@@ -163,7 +163,7 @@ simulate.mp_model <- function(object, n_within, n_between, nsim = 1) {
         (X_b[ , seq_len(l2) + l1, drop = F]
          # Add means for Z
          + matrix(
-             ifelse(binary_l2, 0, p$mean_Z),
+             p$mean_Z,
              nrow = N,
              ncol = l2,
              byrow = T
