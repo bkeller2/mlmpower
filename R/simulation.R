@@ -434,7 +434,7 @@ print.mp_power <- function(x, ...) {
         }
     }
     cli::cli_text('')
-    cli::cli_alert_info('Margin of error (MOE) computed as ± 1.96 * standard error')
+    cli::cli_alert_info('Margin of error (MOE) computed as +/- 1.96 * standard error')
     invisible(x)
 }
 

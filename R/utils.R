@@ -107,7 +107,7 @@ power_table <- function(x) {
     d <- data.frame(
         Power = paste(
             formatC(x[,1], digits = 2, format = 'f' ),
-            paste('±', formatC(x[,2], digits = 2, format = 'f'))
+            paste('+/-', formatC(x[,2], digits = 2, format = 'f'))
         )
     )
     rownames(d) <-  vapply(strsplit(row.names(x), '.', fixed = T), \(x) {
