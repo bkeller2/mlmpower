@@ -192,9 +192,9 @@ make_parameters <- function(model) {
         gamma_b[is.na(gamma_b)] <- 0
 
         # compute the random effect correlation matrix
-        cor_raneffects <- matrix(1, nrow = num_X + 1, ncol = num_X + 1)
-        corvec <- corr_raneffects((num_X + 1) * ((num_X + 1) - 1) / 2)
-        cor_raneffects[upper.tri(cor_raneffects)] <- cor_raneffects[lower.tri(cor_raneffects)] <- corvec
+        cor_raneffects <- diag(nrow = num_X + 1, ncol = num_X + 1)
+        cor_sel <- which(weights_ranslopes_w != 0)
+        cor_raneffects[1, cor_sel + 1] <- cor_raneffects[cor_sel + 1, 1] <- corr_raneffects(length(cor_sel))
 
         # solve for the random slope variances
         cor_ranslopes <- cor_raneffects[-1, -1, drop = F]
@@ -265,9 +265,18 @@ make_parameters <- function(model) {
         check_var_Y <- (
             t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*%
                 phi_b %*% gamma_b + sum(diagonal(tau[-1, -1, drop = F] %*% phi_XX_w))
-            + t(mean_X) %*% tau_ranslopes %*% mean_X + t(mean_X) %*%
+            + t(model_mean_X) %*% tau_ranslopes %*% model_mean_X + t(model_mean_X) %*%
                 tau[-1, 1, drop = F] + tau00 + var_e_w
         )
+        # check_var_Y_w <- (
+        #     t(gamma_w) %*% phi_w %*% gamma_w
+        #     + sum(diag(tau[-1, -1, drop = F] %*% phi_XX_w)) + var_e_w
+        # )
+        # check_var_Y_b <- (
+        #     t(gamma_b) %*% phi_b %*% gamma_b + t(model_mean_X) %*%
+        #         tau_ranslopes %*% model_mean_X + t(model_mean_X) %*% tau[-1,1]
+        #     + tau00
+        # )
         R2check_X_w <- t(gamma_X_w) %*% phi_XX_w %*% gamma_X_w / check_var_Y
         R2check_XZ_w <- t(gamma_XZ_w) %*% phi_XZwithXZ_w %*% gamma_XZ_w / check_var_Y
         R2check_ranslopes_w <- sum(diagonal(tau_ranslopes %*% phi_XX_w)) / check_var_Y
