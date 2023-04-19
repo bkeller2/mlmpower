@@ -45,10 +45,10 @@
         var_X <- vapply(predictors[l1], \(.) .$sd^2, numeric(1L))
         var_Z <- vapply(predictors[l2], \(.) .$sd^2, numeric(1L))
         # Get correlations
-        corr_X <- corrs$within_cor
-        corr_Z <- corrs$between_cor
-        corr_X_Z <- corrs$between_cor
-        corr_raneffects <- corrs$randeff_cor
+        corr_X <- corrs$within
+        corr_Z <- corrs$between
+        corr_X_Z <- corrs$between
+        corr_raneffects <- corrs$randeff
         # Get icc (Assumes only one)
         icc_Y <- if (is.null(outcome$icc)) effect_size$icc else outcome$icc
         icc_X <- vapply(predictors[l1], \(.) {
@@ -213,7 +213,7 @@ make_parameters <- function(model) {
         # random intercept variation due to non-zero level-1 means
         a <- t(model_mean_X) %*% (cor_is * sqrt(var_ranslopes))
         s <- t(model_mean_X) %*% tau_ranslopes %*% model_mean_X
-        tau00 <- 0.5 * (-2 * b + a^2 - 2 * s + 2 * var_Y_b) + 0.5 * sqrt(-4 * b * a^2 + a^4 - 4 * a^2 * s + 4 * a^2 * var_Y_b)
+        tau00 <- 0.5 * (-2 * b + a^2 - 2 * s + 2 * var_Y_b) - 0.5 * sqrt(-4 * b * a^2 + a^4 - 4 * a^2 * s + 4 * a^2 * var_Y_b)
 
         # Check if tau00 is positive
         if (tau00 < 0) {
@@ -262,7 +262,12 @@ make_parameters <- function(model) {
         row.names(phi_XZwithXZ_w) <- colnames(phi_XZwithXZ_w) <- vars_XZ
 
         # R-square summary
-        check_var_Y <- t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*% phi_b %*% gamma_b + sum(diagonal(tau[-1, -1] %*% phi_XX_w)) + tau00 + var_e_w
+        check_var_Y <- (
+            t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*%
+                phi_b %*% gamma_b + sum(diagonal(tau[-1, -1, drop = F] %*% phi_XX_w))
+            + t(mean_X) %*% tau_ranslopes %*% mean_X + t(mean_X) %*%
+                tau[-1, 1, drop = F] + tau00 + var_e_w
+        )
         R2check_X_w <- t(gamma_X_w) %*% phi_XX_w %*% gamma_X_w / check_var_Y
         R2check_XZ_w <- t(gamma_XZ_w) %*% phi_XZwithXZ_w %*% gamma_XZ_w / check_var_Y
         R2check_ranslopes_w <- sum(diagonal(tau_ranslopes %*% phi_XX_w)) / check_var_Y
@@ -330,15 +335,14 @@ make_avg_parameters <- function(model) {
     if (is_fixed_cor(model$corrs)) return(model |> make_parameters())
 
     # Otherwise find average correlation
-
-    # Create temp model with default corrs
-    new_model <- clone(model)
-
-    # Find average
-    new_model$corrs <- correlations(
-        within_cor  = fixed(mean(model$corrs$within_cor)),
-        between_cor = fixed(mean(model$corrs$between_cor)),
-        randeff_cor = fixed(mean(model$corrs$randeff_cor))
+    # Create temp model with average corrs
+    new_model <- (
+        clone(model)
+        + correlations(
+            within  = fixed(mean(model$corrs$within)),
+            between = fixed(mean(model$corrs$between)),
+            randeff = fixed(mean(model$corrs$randeff))
+        )
     )
 
     # output parameters

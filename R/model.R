@@ -47,11 +47,27 @@ is_valid <- function(x) {
 
     # Check if random slopes exist with non 0 effect size
     if (es$random_slope > 0) {
-        sel <- vapply(x$actions, \(.) .$type == "random_slope", logical(1L))
-        if (sum(sel) == 0) throw_error(c(
+        count <- sum(vapply(x$actions, \(.) .$type == "random_slope", logical(1L)))
+        if (count == 0) throw_error(c(
             'The {.cls model} object is not properly constructed.',
             'x' = 'An effect size for random slopes was specified with no random slopes.'
         ))
+        # Check if correlation is non zero for more than 1 random slope
+        else if (count > 1) {
+            if (!is_fixed(x$corrs$randeff) | mean(x$corrs$randeff) != 0) {
+
+                # Check if default and swap to zero
+                if (isTRUE(attr(x$corrs$randeff, 'default'))) {
+                    x$corrs$randeff <- fixed(0)
+                } else {
+                    throw_error(c(
+                        'The {.cls model} object is not properly constructed.',
+                        'x' = 'Multiple random slopes exist with non-zero {.arg randeff} correlation.',
+                        'i' = 'The {.arg randeff} must be set to 0 with multiple random slopes.'
+                    ))
+                }
+            }
+        }
     }
 
     # Check if product exist with non 0 effect size
@@ -143,11 +159,11 @@ subset.mp_model <- function(x, icc, ...) {
 
 #' Internal function to call function for a `mp_model`
 #' @noRd
-with_model <- function(data, expr, ...) {
+with_model <- function(model, expr, ...) {
     if (!is.function(expr)) {
         throw_error('Second argument must be function')
     }
-    environment(expr) <- data
+    environment(expr) <- model
     expr(...)
 }
 
@@ -194,14 +210,7 @@ print.mp_model <- function(x, ...) {
 
     cli::cli_h3('{.cli correlations}')
     cli::cli_text('')
-    cli::cli_ul(
-        c(
-            'WITHIN = {as.character(x$corrs$within_cor)}',
-            'BETWEEN = {as.character(x$corrs$between_cor)}',
-            'RANDOM EFFECT = {as.character(x$corrs$randeff_cor)}'
-        )
-    )
-    cli::cli_end()
+    print(x$corrs)
 }
 
 

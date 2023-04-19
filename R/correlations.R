@@ -51,7 +51,7 @@ is_fixed <- function(x) {
 #' Convert `mp_corr_func` to a character
 #' @noRd
 as.character.mp_corr_func <- function(x, ...) {
-    if (is_fixed(x)) as.character(environment(x)$`_value`)
+    if (is_fixed(x)) as.character(environment(x)$`value`)
     else deparse(environment(x)$`_call`)
 }
 
@@ -71,76 +71,118 @@ mean.mp_corr_func <- function(x, ...) {
 #'
 #' @noRd
 is_fixed_cor <- function(x) {
-    is_fixed(x$within_cor) &
-        is_fixed(x$between_cor) &
-        is_fixed(x$randeff_cor)
+    is_fixed(x$within) &
+        is_fixed(x$between) &
+        is_fixed(x$randeff)
 }
+
+#' Check if types are valid for a correlation
+#'
+#' @noRd
+valid_corr_type <- function(x) {
+    switch(
+        x,
+        within = TRUE,
+        between = TRUE,
+        randeff = TRUE,
+        FALSE # Default
+    )
+}
+
 
 #' Internal function for mp_correlations object
 #'
 #' @noRd
-mp_correlations <- function(within_cor, between_cor, randeff_cor) {
-    # Create environment
-    e <- list2env(
-        list(
-            within_cor = within_cor,
-            between_cor = between_cor,
-            randeff_cor = randeff_cor
-        ), parent = emptyenv() )
-
-    # Return object
-    structure(e, class = 'mp_correlations')
+new_correlation <- function(type, value) {
+    if (missing(type)) {
+        throw_error('Must provide effect size type for {.cls mp_correlation}')
+    }
+    if (!valid_corr_type(type)) {
+        throw_error('Invalid type for {.cls mp_correlation}')
+    }
+    if (!is.corr_func(value)) throw_error(
+        '{.arg {type}} must be a single number or created via {.fun fixed} or {.fun random}'
+    )
+    # Create new effect sizes
+    structure(
+        list2env(
+            list(type = type, value = value),
+            parent = emptyenv()
+        ),
+        class = c('mp_corr', 'mp_base')
+    )
 }
 
 #' Set up correlation defaults
 #'
 #' @export
 correlations <- function(
-        within_cor  = random(0.1, 0.3),
-        between_cor = random(0.1, 0.3),
-        randeff_cor = random(0.1, 0.3)) {
+        within,
+        between,
+        randeff) {
+
+    # Create output
+    o <- mp_list()
 
     # Check if single number is specified and set fixed
-    if (is.number(within_cor))  within_cor  <- fixed(within_cor)
-    if (is.number(between_cor)) between_cor <- fixed(between_cor)
-    if (is.number(randeff_cor)) randeff_cor <- fixed(randeff_cor)
-
-    # Validate that they are corr funcs
-    if (!is.corr_func(within_cor)) throw_error(
-        '{.arg within_cor} must be a single number or created via {.fun fixed} or {.fun random}'
-    )
-    if (!is.corr_func(between_cor)) throw_error(
-        '{.arg between_cor} must be a single number or created via {.fun fixed} or {.fun random}'
-    )
-    if (!is.corr_func(randeff_cor)) throw_error(
-        '{.arg randeff_cor} must be a single number or created via {.fun fixed} or {.fun random}'
-    )
-    # Construct correlations object
-    mp_correlations(within_cor, between_cor, randeff_cor)
+    if (!missing(within)) {
+        if (is.number(within))  within  <- fixed(within)
+        o |> add(new_correlation('within', within)) -> o
+    }
+    if (!missing(between)) {
+        if (is.number(between)) between <- fixed(between)
+        o |> add(new_correlation('between', between)) -> o
+    }
+    if (!missing(randeff)) {
+        if (is.number(randeff)) randeff <- fixed(randeff)
+        o |> add(new_correlation('randeff', randeff)) -> o
+    }
+    # Return list
+    return(o)
 }
 
 #' Internal function to create default correlations
 #'
 #' @noRd
 default_correlations <- function() {
-    e <- correlations()
-    attr(e, 'default') <- TRUE
-    return(e)
+    structure(
+        list2env(
+            list(
+                within  = structure(random(0.1, 0.3), default = TRUE),
+                between = structure(random(0.1, 0.3), default = TRUE),
+                randeff = structure(random(0.1, 0.3), default = TRUE)
+            ),
+            parent = emptyenv()
+        ),
+        class = c('mp_correlations', 'mp_base')
+    )
 }
 
 #' Adds correlations to `mp_base` class
 #'
 #' @noRd
-`add.mp_correlations` <- function(x, y) {
-    # Add as predictor if model
+add.mp_corr <- function(x, y) {
+    # Add as correlation if model
     if (is.model(x)) {
-        # check if predictor already there
-        if (is.null(attr(x$corrs, 'default')))  cli::cli_alert_warning(
-            'Correlations have already been specified. Overwritting previous ones.'
-        )
-        x$corrs <- y
+        x$corrs[[y$type]] <- y$value
         return(x)
     }
+
     # Otherwise construct list
     x |> add(mp_list(y))
+}
+
+
+#' Prints `mp_correlations` class
+#'
+#' @export
+print.mp_correlations <- function(x, ...) {
+    cli::cli_ul(
+        c(
+            'WITHIN = {as.character(x$within)}',
+            'BETWEEN = {as.character(x$between)}',
+            'RANDOM EFFECT = {as.character(x$randeff)}'
+        )
+    )
+    invisible(x)
 }

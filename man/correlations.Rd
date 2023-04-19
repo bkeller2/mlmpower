@@ -4,11 +4,7 @@
 \alias{correlations}
 \title{Set up correlation defaults}
 \usage{
-correlations(
-  within_cor = random(0.1, 0.3),
-  between_cor = random(0.1, 0.3),
-  randeff_cor = random(0.1, 0.3)
-)
+correlations(within, between, randeff)
 }
 \description{
 Set up correlation defaults
