@@ -38,7 +38,7 @@ is_valid <- function(x) {
 
     # Check if was specified and any null icc in predictors
     if (is.null(es$icc))  {
-        sel <- vapply(x$predicors, \(.) is.null(.$icc), logical(1L))
+        sel <- vapply(x$predictors, \(.) is.null(.$icc), logical(1L))
         if (sum(sel) != 0) throw_error(c(
             'The {.cls model} object is not properly constructed.',
             'x' = 'The ICC was never specified for the model.'
