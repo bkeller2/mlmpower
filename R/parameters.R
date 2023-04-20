@@ -1,5 +1,12 @@
+#' @rdname Parameters
+#' @title `mlmpower` Modeling Framework
+#' @name Parameters
+#' @aliases mp_parameters parameters
+#' @description Test
+# TODO finish this documentation
+NULL
+
 #' Internal function to convert `mp_model` object to old set up
-#'
 #' @noRd
 `_convert` <- function() {
     # obtain level-1 and level-2 vars
@@ -85,7 +92,6 @@
 
 #' Internal function to solve parameters based on
 #' a converted `mp_model` object.
-#'
 #' @noRd
 make_parameters <- function(model) {
     # Convert model to old specification
@@ -383,7 +389,6 @@ is.parameters <- function(x) {
 }
 
 #' Convert `mp_parameters` object to a formula for `lme4`
-#'
 #' @noRd
 to_formula <- function(x, e = globalenv(), nested = FALSE) {
 
@@ -450,13 +455,27 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
     return(as.formula(lme4_model, e))
 }
 
-#' Convert `mp_parameters` to list
+#' Convert [`mlmpower::mp_parameters`] to a [`list`]
+#' @noRd
 #' @export
 as.list.mp_parameters <- function(x, ...) {
     as.list.environment(x, ...)
 }
 
-#' print `mp_parameters` to list
+#' Prints a [`mlmpower::mp_parameters`]
+#' @description
+#' Prints a [`mlmpower::mp_parameters`] in a human readable format.
+#' @param x a [`mlmpower::mp_parameters`].
+#' @param ... arguments passed to [`print()`].
+#' @returns Invisibly returns the original variable.
+#' @examples
+#' print(
+#'     summary(
+#'         outcome('Y')
+#'         + within_predictor('X')
+#'         + effect_size(icc = cross_sectional)
+#'     )
+#' )
 #' @export
 print.mp_parameters <- function(x, ...) {
     l <- lapply(as.list(x), function(x) {
@@ -464,12 +483,12 @@ print.mp_parameters <- function(x, ...) {
         x
     })
     print(l[names(l) != 'timevar_l1'], ...)
+    invisible(x)
 }
 
 #' Internal function to keep online average for `mp_parameters`
-#'
-#' @export
-`+.mp_parameters` <- function(e1, e2) {
+#' @noRd
+average <- function(e1, e2) {
     # Check if one is missing
     if (missing(e1)) return(e2)
     if (missing(e2)) return(e1)

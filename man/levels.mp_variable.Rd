@@ -2,10 +2,28 @@
 % Please edit documentation in R/variables.R
 \name{levels.mp_variable}
 \alias{levels.mp_variable}
-\title{Obtain levels for a variable}
+\title{Obtain Level of Observation for a Variable}
 \usage{
 \method{levels}{mp_variable}(x)
 }
+\arguments{
+\item{x}{a \code{\link{mp_variable}}.}
+}
+\value{
+Returns a single integer of the level of observation
+}
 \description{
-Obtain levels for a variable
+Returns which level a variable is observed at in the multilevel model.
+}
+\examples{
+# Returns 1
+levels(
+    within_predictor(
+        'X',
+        weight = 1,
+        mean = 5,
+        sd = 10,
+        icc = 0.1
+    )
+)
 }

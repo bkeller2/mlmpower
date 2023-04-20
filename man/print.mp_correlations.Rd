@@ -2,10 +2,30 @@
 % Please edit documentation in R/correlations.R
 \name{print.mp_correlations}
 \alias{print.mp_correlations}
-\title{Prints `mp_correlations` class}
+\title{Prints a \code{\link{mp_correlations}}}
 \usage{
 \method{print}{mp_correlations}(x, ...)
 }
+\arguments{
+\item{x}{a \code{\link{mp_correlations}}.}
+
+\item{...}{other arguments not used by this method.}
+}
+\value{
+Invisibly returns the original variable.
+}
 \description{
-Prints `mp_correlations` class
+Prints a \code{\link{mp_correlations}} in a human readable format.
+}
+\examples{
+model <- (
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(
+        icc = c(0.1, 0.2),
+        within = 0.3
+    )
+)
+# Print correlations only
+print(model$corrs)
 }

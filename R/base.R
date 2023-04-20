@@ -18,7 +18,7 @@ is.base <- function(x) {
 }
 
 #' Add `mp_base` objects together
-#'
+#' @noRd
 #' @export
 `+.mp_base` <- function(e1, e2) {
     # Check if one is missing

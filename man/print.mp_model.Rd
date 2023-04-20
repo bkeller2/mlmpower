@@ -2,10 +2,25 @@
 % Please edit documentation in R/model.R
 \name{print.mp_model}
 \alias{print.mp_model}
-\title{Prints `mp_model` object}
+\title{Prints a \code{\link{mp_model}}}
 \usage{
 \method{print}{mp_model}(x, ...)
 }
+\arguments{
+\item{x}{a \code{\link{mp_model}}.}
+
+\item{...}{other arguments not used by this method.}
+}
+\value{
+Invisibly returns the original variable.
+}
 \description{
-Prints `mp_model` object
+Prints a \code{\link{mp_variable}} in a human readable format.
+}
+\examples{
+print(
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(icc = cross_sectional)
+)
 }

@@ -2,10 +2,44 @@
 % Please edit documentation in R/simulation.R
 \name{generate}
 \alias{generate}
-\title{Generate a data set based on `mp_model`}
+\alias{mp_data}
+\title{Generates Data Sets Based on a \code{\link{mp_model}}}
 \usage{
-generate(object, n_within, n_between, ndata = 1)
+generate(model, n_within, n_between, ndata = 1)
+}
+\arguments{
+\item{model}{a \code{\link{mp_model}}.}
+
+\item{n_within}{a single positive integer of the desired within cluster observations.}
+
+\item{n_between}{a single positive integer of the desired between cluster observations.}
+
+\item{ndata}{a single positive integer of the number of desired data sets.}
+}
+\value{
+For \code{ndata = 1} a single \code{\link{data.frame}} is returned.
+The first variable is the cluster identifier labeled \verb{_id}.
+This object is also of class \code{mp_data} which means that it was generated
+based on a specified model.
+If multiple data sets are requested then they will be contained in a \code{\link{list}}.
 }
 \description{
-Generate a data set based on `mp_model`
+Generates data sets based on a \code{\link{mp_model}}.
+These data sets will be returned as a \code{\link{data.frame}} and include the
+solved parameters as an attribute to the \code{\link{data.frame}}.
+}
+\details{
+Note that there must only be one global ICC in \code{\link{mp_model}}.
+}
+\examples{
+# Create Model
+model <- (
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(icc = 0.1)
+)
+# Set seed
+set.seed(198723)
+# Create data set
+model |> generate(5, 50) -> mydata
 }

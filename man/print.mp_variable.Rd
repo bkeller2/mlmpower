@@ -2,10 +2,29 @@
 % Please edit documentation in R/variables.R
 \name{print.mp_variable}
 \alias{print.mp_variable}
-\title{Prints `mp_variable` class}
+\title{Prints a \code{\link{mp_variable}}}
 \usage{
 \method{print}{mp_variable}(x, ...)
 }
+\arguments{
+\item{x}{a \code{\link{mp_variable}}.}
+
+\item{...}{other arguments not used by this method.}
+}
+\value{
+Invisibly returns the original variable.
+}
 \description{
-Prints `mp_variable` class
+Prints a \code{\link{mp_variable}} in a human readable format.
+}
+\examples{
+print(
+    within_predictor(
+        'X',
+        weight = 1,
+        mean = 5,
+        sd = 10,
+        icc = 0.1
+    )
+)
 }

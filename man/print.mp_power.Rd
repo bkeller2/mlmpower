@@ -2,10 +2,33 @@
 % Please edit documentation in R/simulation.R
 \name{print.mp_power}
 \alias{print.mp_power}
-\title{Print a `mp_power`}
+\title{Prints a \code{\link{mp_power}}}
 \usage{
 \method{print}{mp_power}(x, ...)
 }
+\arguments{
+\item{x}{a \code{\link{mp_power}}.}
+
+\item{...}{other arguments not used by this method.}
+}
+\value{
+Invisibly returns the original variable.
+}
 \description{
-Print a `mp_power`
+Prints a \code{\link{mp_power}} in a human readable format.
+}
+\examples{
+# Create Model
+model <- (
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(icc = 0.1)
+)
+# Set seed
+set.seed(19723)
+# Create data set and analyze
+# Note: Generally Use more than 50 replications
+model |> power_analysis(50, 5, 50) -> powersim
+# Print results
+print(powersim)
 }

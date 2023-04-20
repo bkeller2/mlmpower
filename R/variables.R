@@ -1,5 +1,22 @@
-#' Check if types are valid for a variable
+#' @rdname mp_variable
+#' @title Functions for Creating Variables
+#' @name Variables
+#' @aliases variables variable mp_variable
+#' @description
+#' These functions are the building blocks used to create the multilevel model
+#' and are used to specify the names, properties, and variable types.
+#' @returns Returns a `mp_variable` object based on the variable's type.
+#' @details
+#' Note that specifying an `icc = 0` in `within_predictor()`
+#' will result in a centered within cluster (CWC) predictor.
 #'
+#' See vignettes for more details.
+#' ```{r}
+#' vignette(package = 'mlmpower')
+#' ```
+NULL
+
+#' Check if types are valid for a variable
 #' @noRd
 valid_variable_type <- function(x) {
     switch(
@@ -13,7 +30,6 @@ valid_variable_type <- function(x) {
 }
 
 #' Generate Base variable for mlmpower
-#'
 #' @noRd
 make_variable <- function(type, name, weight, mean, sd, icc) {
     if (missing(name)) {
@@ -93,35 +109,46 @@ make_variable <- function(type, name, weight, mean, sd, icc) {
 }
 
 #' Validate classes
-#'
 #' @noRd
 is.variable <- function(x) {
     inherits(x, 'mp_variable')
 }
 
 #' Check if a variable has already been specified by name
-#'
 #' @noRd
 has_variable <- function(x, y) {
     !is.null(x[[y$name]])
 }
 
-#' Create outcome
-#'
+# Create outcome
+#' @rdname mp_variable
+#' @aliases outcome
+#' @param name a character string for the specific variable's name
+#' @param mean a single numeric value that specifies the variable's mean
+#' @param sd a single numeric value that specifies the variable's standard deviation
+#' @param icc a single numeric value between 0 and 1 that specifies the variable's intraclass correlation.
+#' If `NULL` then the global ICC specified in [mlmpower::effect_size()] is used instead.
 #' @export
 outcome <- function(name, mean = 10, sd = 5, icc = NULL) {
     make_variable('outcome', name, NA, mean, sd, icc)
 }
 
 #' Validate classes
-#'
 #' @noRd
 is.outcome <- function(x) {
     inherits(x, 'mp_outcome')
 }
 
-#' Create within predictor
-#'
+# Create within predictor
+#' @rdname mp_variable
+#' @aliases within_predictor
+#' @param name a character string for the specific variable's name
+#' @param weight a single numeric value specifying the variable's contribution to the variance explained metric.
+#' Weights are normalized across all variables of the same level.
+#' @param mean a single numeric value that specifies the variable's mean
+#' @param sd a single numeric value that specifies the variable's standard deviation
+#' @param icc a single numeric value between 0 and 1 that specifies the variable's intraclass correlation.
+#' If `NULL` then the global ICC specified in [`mlmpower::effect_size()`] is used instead.
 #' @export
 within_predictor <- function(name, weight = 1, mean = 0, sd = 1, icc = NULL) {
     if (is.null(icc)) { } # do nothing
@@ -134,8 +161,13 @@ within_predictor <- function(name, weight = 1, mean = 0, sd = 1, icc = NULL) {
     make_variable('predictor', name, weight, mean, sd, icc)
 }
 
-#' Create within predictor
-#'
+# Create within time predictor
+#' @rdname mp_variable
+#' @aliases within_time_predictor
+#' @param name a character string for the specific variable's name
+#' @param values a numeric vector specifying the time scores that will be repeated within each cluster.
+#' @param weight a single numeric value specifying the variable's contribution to the variance explained metric.
+#' Weights are normalized across all variables of the same level.
 #' @export
 within_time_predictor <- function(name, values, weight = 1) {
 
@@ -155,17 +187,28 @@ within_time_predictor <- function(name, values, weight = 1) {
     return(v)
 }
 
-#' Create Between predictor
-#'
+# Create Between predictor
+#' @rdname mp_variable
+#' @aliases between_predictor
+#' @param name a character string for the specific variable's name
+#' @param weight a single numeric value specifying the variable's contribution to the variance explained metric.
+#' Weights are normalized across all variables of the same level.
+#' @param mean a single numeric value that specifies the variable's mean
+#' @param sd a single numeric value that specifies the variable's standard deviation
 #' @export
 between_predictor <- function(name, weight = 1, mean = 0, sd = 1) {
     make_variable('predictor', name, weight, mean, sd, NA)
 }
 
-#' Create Between binary predictor
-#'
+# Create Between binary predictor
+#' @rdname mp_variable
+#' @aliases between_binary_predictor
+#' @param name a character string for the specific variable's name
+#' @param proportion a single numeric value between 0 and 1 that specifies the proportion of 1's at the population.
+#' @param weight a single numeric value specifying the variable's contribution to the variance explained metric.
+#' Weights are normalized across all variables of the same level.
 #' @export
-between_binary_predictor <- function(name, weight = 1, proportion = 0.5) {
+between_binary_predictor <- function(name, proportion = 0.5, weight = 1) {
     if (!is.number(proportion)) {
         throw_error('Proportion must be a single number {.cls between_binary_predictor}')
     }
@@ -182,8 +225,22 @@ between_binary_predictor <- function(name, weight = 1, proportion = 0.5) {
 }
 
 
-#' Obtain levels for a variable
-#'
+#' Obtain Level of Observation for a Variable
+#' @description
+#' Returns which level a variable is observed at in the multilevel model.
+#' @param x a [`mlmpower::mp_variable`].
+#' @returns Returns a single integer of the level of observation
+#' @examples
+#' # Returns 1
+#' levels(
+#'     within_predictor(
+#'         'X',
+#'         weight = 1,
+#'         mean = 5,
+#'         sd = 10,
+#'         icc = 0.1
+#'     )
+#' )
 #' @export
 levels.mp_variable <- function(x) {
     if (is.null(x$icc)) return(1)
@@ -192,7 +249,6 @@ levels.mp_variable <- function(x) {
 }
 
 #' Adds outcome to `mp_base` class
-#'
 #' @noRd
 add.mp_outcome <- function(x, y) {
     # Add as outcome if model
@@ -208,7 +264,6 @@ add.mp_outcome <- function(x, y) {
 }
 
 #' Adds timevar to `mp_base` class
-#'
 #' @noRd
 add.mp_timevar <- function(x, y) {
     # Add as predictor if model
@@ -235,7 +290,6 @@ add.mp_timevar <- function(x, y) {
 }
 
 #' Adds predictor to `mp_base` class
-#'
 #' @noRd
 add.mp_predictor <- function(x, y) {
     # Add as predictor if model
@@ -251,8 +305,37 @@ add.mp_predictor <- function(x, y) {
     x |> add(mp_list(y))
 }
 
-#' Prints `mp_variable` class
-#'
+#' Converts a `mp_variable` class into a single row `data.frame`
+#' @noRd
+variable_to_row <- function(x) {
+    as.data.frame(
+        within(c(x), {
+            icc  <- if (is.null(icc)) '' else if (is.na(icc)) 'NA' else icc
+            level <- levels(x)
+            type <- if ('mp_timevar' %in% class(x)) 'timevar'
+            else if ('mp_binary' %in% class(x)) 'binary'
+            else 'continuous'
+            if ('mp_timevar' %in% class(x)) rm(values) # Remove values
+        })
+    )
+}
+
+#' Prints a [`mlmpower::mp_variable`]
+#' @description
+#' Prints a [`mlmpower::mp_variable`] in a human readable format.
+#' @param x a [`mlmpower::mp_variable`].
+#' @param ... other arguments not used by this method.
+#' @returns Invisibly returns the original variable.
+#' @examples
+#' print(
+#'     within_predictor(
+#'         'X',
+#'         weight = 1,
+#'         mean = 5,
+#'         sd = 10,
+#'         icc = 0.1
+#'     )
+#' )
 #' @export
 print.mp_variable <- function(x, ...) {
     cli::cli_ul(
@@ -270,19 +353,4 @@ print.mp_variable <- function(x, ...) {
     invisible(x)
 }
 
-#' Converts a `mp_variable` class into a single row `data.frame`
-#'
-#' @export
-as.data.frame.mp_variable <- function(x, ...) {
-    as.data.frame(
-        within(c(x), {
-            icc  <- if (is.null(icc)) '' else if (is.na(icc)) 'NA' else icc
-            level <- levels(x)
-            type <- if ('mp_timevar' %in% class(x)) 'timevar'
-            else if ('mp_binary' %in% class(x)) 'binary'
-            else 'continuous'
-            if ('mp_timevar' %in% class(x)) rm(values) # Remove values
-        })
-    )
-}
 

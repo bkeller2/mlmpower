@@ -2,10 +2,18 @@
 % Please edit documentation in R/effect_size.R
 \name{print.mp_effect}
 \alias{print.mp_effect}
-\title{Prints `mp_effect` class}
+\title{Prints a \code{\link{mp_effect}}}
 \usage{
 \method{print}{mp_effect}(x, ...)
 }
+\arguments{
+\item{x}{a \code{\link{mp_effect}}.}
+
+\item{...}{other arguments not used by this method.}
+}
+\value{
+Invisibly returns the original variable.
+}
 \description{
-Prints `mp_effect` class
+Prints a \code{\link{mp_effect}} in a human readable format.
 }

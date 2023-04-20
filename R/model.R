@@ -1,5 +1,49 @@
-#' Generate Multilevel base class
+#' @rdname mlmpower
+#' @title `mlmpower` Modeling Framework
+#' @name mlmpower
+#' @aliases mp_model model Modeling modeling `+.mp_base` mp_action mp_base
+#' @seealso
+#' [mlmpower::Variables] [mlmpower::effect_size()]
+#' [mlmpower::correlations()] [mlmpower::random_slope()]
+#' [mlmpower::product()]
+#' @description
+#' `mlmpower` constructs models by adding different features of the model using the plus sign  (`+`).
 #'
+#' Every model requires an [`mlmpower::outcome`] and an ICC specified in [`mlmpower::effect_size`] to be valid.
+#' ```{r}
+#' model <- outcome('y') + effect_size(icc = 0.1)
+#' ```
+#' Once a model is constructed, we can add additional features to build the model out more.
+#' For example, we may want to include a level-1 predictor that is centered within cluster.
+#' ```{r}
+#' model <- model + within_predictor('x', icc = 0.0)
+#' ```
+#' The additions can be chained together to produce the entire model object.
+#' For example, the previous two code blocks can be combined into one.
+#' ```{r}
+#' model <- (
+#'     outcome('y')
+#'     + effect_size(icc = 0.1)
+#'     + within_predictor('x', icc = 0.0)
+#' )
+#' ```
+#' Finally, we can also wrap multiple variables into a list and add that.
+#' This feature can be useful when programmatically generating a model.
+#' ```{r}
+#' model <- (
+#'     outcome('y')
+#'     + effect_size(icc = 0.1)
+#'     + lapply(1:10, \(i) within_predictor(paste0('x', i), icc = 0.0))
+#' )
+#' ```
+#'
+#' For more detailed information see the help vignette by running the following:
+#' ```{r}
+#' vignette(package = 'mlmpower')
+#' ```
+NULL
+
+#' Generate Multilevel base class
 #' @noRd
 make_model <- function(o) {
     # Create environment
@@ -23,7 +67,22 @@ is.model <- function(x) {
     inherits(x, 'mp_model')
 }
 
-#' Check if a `mp_model` is properly constructed
+#' Check if a Model is Properly Specified
+#' @description
+#' This function is used to validate if a [`mlmpower::mp_model`] is correct.
+#' If the model is incorrect an appopriate error message describing while will be supplied
+#' @param x a [`mlmpower::mp_model`]
+#' @returns Invisibly returns the original model.
+#' @examples
+#' # Create Model
+#' model <- outcome('Y') + within_predictor('X')
+#' # Throws error
+#' tryCatch(
+#'     is_valid(model),
+#'     error = print
+#' )
+#' # Succeeds
+#' is_valid(model + effect_size(icc = 0.1))
 #' @export
 is_valid <- function(x) {
 
@@ -137,8 +196,23 @@ clone.mp_model <- function(x) {
     structure(e, class = c('mp_model', 'mp_base'))
 }
 
-#' Subset by ICC `mp_model`
-#'
+#' Subset a [`mlmpower::mp_model`] by Global ICC
+#' @description
+#' Subsets a [`mlmpower::mp_model`] with multiple ICC values specified in [`mlmpower::effect_size`]
+#' into a model with only the single ICC value.
+#' @param x a [`mlmpower::mp_model`] object
+#' @param icc a single numeric value to subset out of `x`
+#' @param ... other arguments not used by this method.
+#' @returns A new [`mlmpower::mp_model`] with only the subset ICC
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = cross_sectional)
+#' )
+#' # Obtain Model with only 0.15 ICC
+#' model |> subset(icc = 0.15)
 #' @export
 subset.mp_model <- function(x, icc, ...) {
 
@@ -169,7 +243,18 @@ with_model <- function(model, expr, ...) {
 
 
 
-#' Prints `mp_model` object
+#' Prints a [`mlmpower::mp_model`]
+#' @description
+#' Prints a [`mlmpower::mp_variable`] in a human readable format.
+#' @param x a [`mlmpower::mp_model`].
+#' @param ... other arguments not used by this method.
+#' @returns Invisibly returns the original variable.
+#' @examples
+#' print(
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = cross_sectional)
+#' )
 #' @export
 print.mp_model <- function(x, ...) {
 
@@ -186,7 +271,7 @@ print.mp_model <- function(x, ...) {
     print(
         do.call(
             'rbind',
-            lapply(x$predictors, as.data.frame)
+            lapply(x$predictors, variable_to_row)
         )[, c('level', 'icc', 'weight', 'type')],
         right = FALSE
     )
@@ -197,7 +282,7 @@ print.mp_model <- function(x, ...) {
         print(
             do.call(
                 'rbind',
-                lapply(x$actions, as.data.frame)
+                lapply(x$actions, action_to_row)
             ),
             right = FALSE,
             row.names = FALSE
@@ -214,7 +299,24 @@ print.mp_model <- function(x, ...) {
 }
 
 
-#' Provides parameter summary of a `mp_model` object
+#' Obtain the Parameter Summaries for A [`mlmpower::mp_model`]
+#' @description
+#' Provide the summarized parameter estimates for a [`mlmpower::mp_model`],
+#' including the variance explained break downs.
+#'
+#' @param object a [`mlmpower::mp_model`]
+#' @param ... other arguments not used by this method.
+#' @returns
+#' A [`mlmpower::mp_parameters`] object that contains the population parameters based on the model.
+#' If random correlations are used the average correlation is used to compute the parameters.
+#' If multiple ICC's are specified then a named [`base::list`] is
+#' returned containing the parameter value for each ICC value.
+#' @examples
+#' summary(
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = cross_sectional)
+#' )
 #' @export
 summary.mp_model <- function(object, ...) {
 

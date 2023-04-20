@@ -24,7 +24,6 @@ as.mp_list <- function(object) {
 add.mp_list <- function(x, y) {
 
     # Check if x is list and append
-    # TODO needs to check for outcome?
     if (is.mp_list(x)) {
         return(as.mp_list(c(y, x)))
     }

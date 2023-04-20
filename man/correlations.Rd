@@ -2,10 +2,48 @@
 % Please edit documentation in R/correlations.R
 \name{correlations}
 \alias{correlations}
-\title{Set up correlation defaults}
+\alias{mp_corr}
+\alias{mp_correlations}
+\title{Specify the Correlation Structure for the Model}
 \usage{
 correlations(within, between, randeff)
 }
+\arguments{
+\item{within}{a single numeric value or \code{\link{mp_corr_func}} that specifies random correlations.
+Corresponds to the level-1 correlation among predictors.}
+
+\item{between}{a single numeric value or \code{\link{mp_corr_func}} that specifies random correlations.
+Corresponds to the level-2 correlation among predictors.}
+
+\item{randeff}{a single numeric value or \code{\link{mp_corr_func}} that specifies random correlations.
+Corresponds to the random effects correlation among predictors.}
+}
+\value{
+A list that corresponds to each correlation value.
+}
 \description{
-Set up correlation defaults
+Creates a list of correlations to be added to a \code{\link{mp_model}}.
+}
+\details{
+The default values are \code{random(0.1, 0.3)}.
+Currently \code{randeff} are required to be zero if more than one random slope is in the model.
+}
+\examples{
+(
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(
+        icc = c(0.1, 0.2),
+        within = 0.3
+    )
+    # Defaults
+    + correlations(
+        within  = random(0.1, 0.3),
+        between = random(0.1, 0.3),
+        randeff = random(0.1, 0.3)
+    )
+)
+}
+\seealso{
+\code{\link[=random]{random()}} \code{\link[=fixed]{fixed()}}
 }

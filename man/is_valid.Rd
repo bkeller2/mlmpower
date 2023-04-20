@@ -2,10 +2,28 @@
 % Please edit documentation in R/model.R
 \name{is_valid}
 \alias{is_valid}
-\title{Check if a `mp_model` is properly constructed}
+\title{Check if a Model is Properly Specified}
 \usage{
 is_valid(x)
 }
+\arguments{
+\item{x}{a \code{\link{mp_model}}}
+}
+\value{
+Invisibly returns the original model.
+}
 \description{
-Check if a `mp_model` is properly constructed
+This function is used to validate if a \code{\link{mp_model}} is correct.
+If the model is incorrect an appopriate error message describing while will be supplied
+}
+\examples{
+# Create Model
+model <- outcome('Y') + within_predictor('X')
+# Throws error
+tryCatch(
+    is_valid(model),
+    error = print
+)
+# Succeeds
+is_valid(model + effect_size(icc = 0.1))
 }

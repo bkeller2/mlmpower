@@ -2,10 +2,31 @@
 % Please edit documentation in R/model.R
 \name{subset.mp_model}
 \alias{subset.mp_model}
-\title{Subset by ICC `mp_model`}
+\title{Subset a \code{\link{mp_model}} by Global ICC}
 \usage{
 \method{subset}{mp_model}(x, icc, ...)
 }
+\arguments{
+\item{x}{a \code{\link{mp_model}} object}
+
+\item{icc}{a single numeric value to subset out of \code{x}}
+
+\item{...}{other arguments not used by this method.}
+}
+\value{
+A new \code{\link{mp_model}} with only the subset ICC
+}
 \description{
-Subset by ICC `mp_model`
+Subsets a \code{\link{mp_model}} with multiple ICC values specified in \code{\link{effect_size}}
+into a model with only the single ICC value.
+}
+\examples{
+# Create Model
+model <- (
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(icc = cross_sectional)
+)
+# Obtain Model with only 0.15 ICC
+model |> subset(icc = 0.15)
 }

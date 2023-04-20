@@ -2,10 +2,30 @@
 % Please edit documentation in R/effect_size.R
 \name{print.mp_effsize}
 \alias{print.mp_effsize}
-\title{Prints `mp_effsize` class}
+\title{Prints a \code{\link{mp_effsize}}}
 \usage{
 \method{print}{mp_effsize}(x, ...)
 }
+\arguments{
+\item{x}{a \code{\link{mp_effsize}}.}
+
+\item{...}{other arguments not used by this method.}
+}
+\value{
+Invisibly returns the original variable.
+}
 \description{
-Prints `mp_effsize` class
+Prints a \code{\link{mp_effsize}} in a human readable format.
+}
+\examples{
+model <- (
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(
+        icc = c(0.1, 0.2),
+        within = 0.3
+    )
+)
+# Print effect size only
+print(model$effect_size)
 }

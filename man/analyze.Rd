@@ -2,10 +2,38 @@
 % Please edit documentation in R/simulation.R
 \name{analyze}
 \alias{analyze}
-\title{Internal function to analyze one a `mp_data` based on model}
+\title{Analyzes a single \code{\link{mp_data}} using \code{\link[lme4:lmer]{lme4::lmer}}}
 \usage{
 analyze(data, alpha = 0.05, ...)
 }
+\arguments{
+\item{data}{a \code{\link{mp_data}}.}
+
+\item{alpha}{the significance level to determine if an effect is statistically significant.
+If \code{NULL} then no nested model testing is conducted}
+
+\item{...}{other arguments passed to \code{\link[lme4:lmer]{lme4::lmer()}}.}
+}
+\value{
+A \code{\link{list}} that with the following named elements:
+\itemize{
+\item \code{estimates}: The estimates from fitting the model.
+\item \code{sig_test}: The logical if the estimates were statistically siginificant based on \code{alpha}.
+\item \code{parameters}: The \code{\link{mp_parameters}} extracted from \code{data}.
+}
+}
 \description{
-Internal function to analyze one a `mp_data` based on model
+Analyzes a single \code{\link{mp_data}} based on the data generating model.
+}
+\examples{
+# Create Model
+model <- (
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(icc = 0.1)
+)
+# Set seed
+set.seed(198723)
+# Create data set and analyze
+model |> generate(5, 50) |> analyze() -> results
 }

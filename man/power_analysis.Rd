@@ -2,10 +2,57 @@
 % Please edit documentation in R/simulation.R
 \name{power_analysis}
 \alias{power_analysis}
-\title{Conduct a power analysis based on `mp_model`}
+\alias{mp_power}
+\title{Conduct a Power Analysis Based on \code{\link{mp_model}}}
 \usage{
-power_analysis(model, replications, n_within, n_between)
+power_analysis(model, replications, n_within, n_between, ...)
+}
+\arguments{
+\item{model}{a \code{\link{mp_model}}.}
+
+\item{replications}{a single positive integer of the number of replications per condition.}
+
+\item{n_within}{an integer vector of the desired within cluster observations.}
+
+\item{n_between}{an integer vector of the desired between cluster observations.}
+
+\item{...}{other arguments passed to \code{\link[=analyze]{analyze()}}.}
+}
+\value{
+A \code{\link{list}} that with the following named elements:
+\itemize{
+\item \code{estimates}: The estimates from fitting the model.
+\item \code{sig_test}: The logical if the estimates were statistically siginificant based on \code{alpha}.
+\item \code{parameters}: The \code{\link{mp_parameters}} extracted from \code{data}.
+}
+
+A \code{mp_power} object that contains the results.
+See \code{\link{print.mp_power}} for more information.
+The object has the following slots:
+\itemize{
+\item \code{sim}: The information about the simulation
+\item \code{power}: The power power results per condition.
+\item \code{estimates}: The simulation summaries of the parameter estimates per condition.
+\item \code{mean_parameters}: The average population parameter per condition.
+}
 }
 \description{
-Conduct a power analysis based on `mp_model`
+This function will construct a multilevel power analysis via a Monte Carlo Simulation
+based on a constructed \code{\link{mp_model}}.
+}
+\details{
+Specifying multiple \code{n_within} and \code{n_between} will produce a full factorial simulation design.
+}
+\examples{
+# Create Model
+model <- (
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(icc = 0.1)
+)
+# Set seed
+set.seed(19723)
+# Create data set and analyze
+# Note: Generally Use more than 50 replications
+model |> power_analysis(50, 5, 50)
 }

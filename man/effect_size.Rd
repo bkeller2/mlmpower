@@ -2,10 +2,47 @@
 % Please edit documentation in R/effect_size.R
 \name{effect_size}
 \alias{effect_size}
-\title{Add Effect sizes}
+\alias{mp_effect}
+\alias{mp_effsize}
+\alias{cross_sectional}
+\alias{longitudinal}
+\title{Specify the Effect Size for the Model}
 \usage{
 effect_size(icc, within, between, random_slope, product)
+
+cross_sectional()
+
+longitudinal()
+}
+\arguments{
+\item{icc}{a numeric vector of global ICC values for \code{\link{mp_variable}} who are left unspecified.
+Values must be between 0 and 1.}
+
+\item{within}{a single numeric value that corresponds to the proportion of variance explained by the within variables.}
+
+\item{between}{a single numeric value that corresponds to the incremental proportion of variance explained by the between variables.}
+
+\item{random_slope}{a single numeric value that corresponds to the proportion of variance explained by the random slopes.}
+
+\item{product}{a single numeric value that corresponds to the proportion of variance explained by the product terms.}
+}
+\value{
+A list that corresponds to each R2 value.
 }
 \description{
-Add Effect sizes
+Creates a list of effect sizes to be added to a \code{\link{mp_model}}.
+
+Returns suggested ICC's for cross-sectional studies (0.05, 0.15, and 0.25).
+
+Returns suggested ICC ranges for longitudinal studies (0.40, 0.50, and 0.60).
+}
+\examples{
+(
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(
+        icc = c(0.1, 0.2),
+        within = 0.3
+    )
+)
 }

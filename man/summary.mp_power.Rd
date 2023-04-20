@@ -2,10 +2,34 @@
 % Please edit documentation in R/simulation.R
 \name{summary.mp_power}
 \alias{summary.mp_power}
-\title{Summary for `mp_power`}
+\title{Summarizes a \code{\link{mp_power}}}
 \usage{
 \method{summary}{mp_power}(object, ...)
 }
+\arguments{
+\item{object}{a \code{\link{mp_power}}.}
+
+\item{...}{other arguments not used by this method.}
+}
+\value{
+Invisibly returns the original variable.
+}
 \description{
-Summary for `mp_power`
+Summarizes a \code{\link{mp_power}} in a human readable format.
+This is a simple wrapper for \code{\link{print.mp_power}}.
+}
+\examples{
+# Create Model
+model <- (
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(icc = 0.1)
+)
+# Set seed
+set.seed(19723)
+# Create data set and analyze
+# Note: Generally Use more than 50 replications
+model |> power_analysis(50, 5, 50) -> powersim
+# Summarizes results
+summary(powersim)
 }

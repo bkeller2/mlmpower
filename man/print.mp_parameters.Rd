@@ -2,10 +2,27 @@
 % Please edit documentation in R/parameters.R
 \name{print.mp_parameters}
 \alias{print.mp_parameters}
-\title{print `mp_parameters` to list}
+\title{Prints a \code{\link{mp_parameters}}}
 \usage{
 \method{print}{mp_parameters}(x, ...)
 }
+\arguments{
+\item{x}{a \code{\link{mp_parameters}}.}
+
+\item{...}{arguments passed to \code{\link[=print]{print()}}.}
+}
+\value{
+Invisibly returns the original variable.
+}
 \description{
-print `mp_parameters` to list
+Prints a \code{\link{mp_parameters}} in a human readable format.
+}
+\examples{
+print(
+    summary(
+        outcome('Y')
+        + within_predictor('X')
+        + effect_size(icc = cross_sectional)
+    )
+)
 }

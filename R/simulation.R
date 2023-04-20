@@ -1,9 +1,37 @@
-#' Generate a data set based on `mp_model`
+#' Generates Data Sets Based on a [`mlmpower::mp_model`]
+#' @aliases mp_data
+#' @description
+#' Generates data sets based on a [`mlmpower::mp_model`].
+#' These data sets will be returned as a [`data.frame`] and include the
+#' solved parameters as an attribute to the [`data.frame`].
+#' @param model a [`mlmpower::mp_model`].
+#' @param n_within a single positive integer of the desired within cluster observations.
+#' @param n_between a single positive integer of the desired between cluster observations.
+#' @param ndata a single positive integer of the number of desired data sets.
+#' @details
+#' Note that there must only be one global ICC in [`mlmpower::mp_model`].
+#' @returns
+#' For `ndata = 1` a single [`data.frame`] is returned.
+#' The first variable is the cluster identifier labeled `_id`.
+#' This object is also of class `mp_data` which means that it was generated
+#' based on a specified model.
+#' If multiple data sets are requested then they will be contained in a [`list`].
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = 0.1)
+#' )
+#' # Set seed
+#' set.seed(198723)
+#' # Create data set
+#' model |> generate(5, 50) -> mydata
 #' @export
-generate <- function(object, n_within, n_between, ndata = 1) {
+generate <- function(model, n_within, n_between, ndata = 1) {
 
     # Validate Inputs
-    object |> is_valid()
+    model |> is_valid()
 
     if (!is.number(n_within)) throw_error(
         "{.arg n_within} must be a single integer >= 1."
@@ -25,18 +53,18 @@ generate <- function(object, n_within, n_between, ndata = 1) {
     )
 
     # Obtain levels
-    lvls <- vapply(object$predictors, levels, numeric(1L))
+    lvls <- vapply(model$predictors, levels, numeric(1L))
 
     # Obtain timevar level-1 indicators
     timevar_l1 <- unlist(lapply(
-        object$predictors[lvls == 1],  # Subset level-1
+        model$predictors[lvls == 1],  # Subset level-1
         \(.)  'mp_timevar' %in% class(.)  # Select timevar
     ))
     if (sum(timevar_l1) > 1) throw_error("Only one timevar should be specified")
 
     # Change within sample size if timevar specified
     if (TRUE %in% timevar_l1) {
-        len <- length(object$predictors[lvls == 1][[which(timevar_l1)]]$values)
+        len <- length(model$predictors[lvls == 1][[which(timevar_l1)]]$values)
         if (missing(n_within)) {
             n_within <- len
         } else if (len != n_within) {
@@ -51,7 +79,7 @@ generate <- function(object, n_within, n_between, ndata = 1) {
     if (ndata > 1) {
         return(
             lapply(seq_len(ndata), \(.) {
-                object |> generate(n_within, n_between)
+                model |> generate(n_within, n_between, ndata = 1)
             })
         )
     }
@@ -59,12 +87,12 @@ generate <- function(object, n_within, n_between, ndata = 1) {
     # Obtain binary level-2 indicators
     binary_l2 <- sapply(
         # Subset level-2
-        object$predictors[lvls == 2],  # Subset level-2
+        model$predictors[lvls == 2],  # Subset level-2
         \(.)  'mp_binary' %in% class(.)   # Select binary
     )
 
     # Create parameters
-    object |> make_parameters() -> p
+    model |> make_parameters() -> p
 
     # useful precomputed values
     N <- n_within * n_between # Total sample size
@@ -80,7 +108,7 @@ generate <- function(object, n_within, n_between, ndata = 1) {
     # Generate Level-1 Time variables if exists
     if (TRUE %in% timevar_l1) {
         # Get values
-        vals <- object$predictors[lvls == 1][[which(timevar_l1)]]$values
+        vals <- model$predictors[lvls == 1][[which(timevar_l1)]]$values
 
         # Create X_w matrix
         X_w <- matrix(0, N, l1)
@@ -172,8 +200,8 @@ generate <- function(object, n_within, n_between, ndata = 1) {
     names(d) <- c(
         '_id',
         names(p$mean_Y),
-        names(which(vapply(object$predictors, levels, numeric(1L)) == 1)),
-        names(which(vapply(object$predictors, levels, numeric(1L)) == 2))
+        names(which(vapply(model$predictors, levels, numeric(1L)) == 1)),
+        names(which(vapply(model$predictors, levels, numeric(1L)) == 2))
     )
     # Add timevar_l1 to parameters
     p$timevar_l1 <- timevar_l1
@@ -193,8 +221,28 @@ is.mp_data <- function(x) {
 }
 
 
-#' Internal function to analyze one a `mp_data` based on model
-#'
+#' Analyzes a single [`mlmpower::mp_data`] using [`lme4::lmer`]
+#' @description
+#' Analyzes a single [`mlmpower::mp_data`] based on the data generating model.
+#' @param data a [`mlmpower::mp_data`].
+#' @param alpha the significance level to determine if an effect is statistically significant.
+#' If `NULL` then no nested model testing is conducted
+#' @param ... other arguments passed to [`lme4::lmer()`].
+#' @returns A [`list`] that with the following named elements:
+#' - `estimates`: The estimates from fitting the model.
+#' - `sig_test`: The logical if the estimates were statistically siginificant based on `alpha`.
+#' - `parameters`: The [`mlmpower::mp_parameters`] extracted from `data`.
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = 0.1)
+#' )
+#' # Set seed
+#' set.seed(198723)
+#' # Create data set and analyze
+#' model |> generate(5, 50) |> analyze() -> results
 #' @export
 analyze <- function(data, alpha = 0.05, ...) {
 
@@ -202,12 +250,16 @@ analyze <- function(data, alpha = 0.05, ...) {
     if (!is.mp_data(data)) throw_error(
         "{.arg data} must be of a {.cli mp_data} object."
     )
-    if (!is.number(alpha)) throw_error(
-        "{.arg alpha} must be a single number between 0 and 1."
-    )
-    if (alpha <= 0 | alpha >= 1) throw_error(
-        "{.arg alpha} must be a single number between 0 and 1."
-    )
+    # Allow null
+    if (!is.null(alpha)) {
+        if (!is.number(alpha)) throw_error(
+            "{.arg alpha} must be a single number between 0 and 1."
+        )
+        if (alpha <= 0 | alpha >= 1) throw_error(
+            "{.arg alpha} must be a single number between 0 and 1."
+        )
+
+    }
 
     # Make centering env
     e <- centering_env(data$`_id`)
@@ -244,13 +296,13 @@ analyze <- function(data, alpha = 0.05, ...) {
 
 
 #' Internal power analysis function based on `mp_model`
-#'
 #' @noRd
 `_power_analysis` <- function(
         model,
         replications,
         n_within,
-        n_between) {
+        n_between,
+        ...) {
 
     # Double check valid inputs
     if (n_within < 1) throw_error(
@@ -271,14 +323,14 @@ analyze <- function(data, alpha = 0.05, ...) {
                 "| ETA: {cli::pb_eta}"
             )
         ), \(.) {
-            model |> generate(n_within, n_between) |> analyze()
+            model |> generate(n_within, n_between) |> analyze(...)
         }
     )
 
     # Extract results
     e <- sapply(results, \(.) unlist(.$estimates), simplify = 'array')
     s <- sapply(results, \(.) unlist(.$sig_test), simplify = 'array')
-    p <- Reduce('+', lapply(results, \(.) .$parameters))
+    p <- Reduce(average, lapply(results, \(.) .$parameters))
 
     # Drop omnibus test if missing
     s <- na.omit(s)
@@ -309,14 +361,48 @@ analyze <- function(data, alpha = 0.05, ...) {
 }
 
 
-#' Conduct a power analysis based on `mp_model`
-#'
+#' Conduct a Power Analysis Based on [`mlmpower::mp_model`]
+#' @aliases mp_power
+#' @description
+#' This function will construct a multilevel power analysis via a Monte Carlo Simulation
+#' based on a constructed [`mlmpower::mp_model`].
+#' @param model a [`mlmpower::mp_model`].
+#' @param replications a single positive integer of the number of replications per condition.
+#' @param n_within an integer vector of the desired within cluster observations.
+#' @param n_between an integer vector of the desired between cluster observations.
+#' @param ... other arguments passed to [`mlmpower::analyze()`].
+#' @details
+#' Specifying multiple `n_within` and `n_between` will produce a full factorial simulation design.
+#' @returns A [`list`] that with the following named elements:
+#' - `estimates`: The estimates from fitting the model.
+#' - `sig_test`: The logical if the estimates were statistically siginificant based on `alpha`.
+#' - `parameters`: The [`mlmpower::mp_parameters`] extracted from `data`.
+#' @returns A `mp_power` object that contains the results.
+#' See [`mlmpower::print.mp_power`] for more information.
+#' The object has the following slots:
+#' - `sim`: The information about the simulation
+#' - `power`: The power power results per condition.
+#' - `estimates`: The simulation summaries of the parameter estimates per condition.
+#' - `mean_parameters`: The average population parameter per condition.
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = 0.1)
+#' )
+#' # Set seed
+#' set.seed(19723)
+#' # Create data set and analyze
+#' # Note: Generally Use more than 50 replications
+#' model |> power_analysis(50, 5, 50)
 #' @export
 power_analysis <- function(
         model,
         replications,
         n_within,
-        n_between) {
+        n_between,
+        ...) {
 
     # Validate inputs
 
@@ -379,7 +465,8 @@ power_analysis <- function(
             model |> subset(icc = icc) |> `_power_analysis`(
                 replications,
                 n_within,
-                n_between
+                n_between,
+                ...
             )
         },
         icc = icc,
@@ -414,8 +501,26 @@ power_analysis <- function(
 
 }
 
-#' Print a `mp_power`
-#'
+#' Prints a [`mlmpower::mp_power`]
+#' @description
+#' Prints a [`mlmpower::mp_power`] in a human readable format.
+#' @param x a [`mlmpower::mp_power`].
+#' @param ... other arguments not used by this method.
+#' @returns Invisibly returns the original variable.
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = 0.1)
+#' )
+#' # Set seed
+#' set.seed(19723)
+#' # Create data set and analyze
+#' # Note: Generally Use more than 50 replications
+#' model |> power_analysis(50, 5, 50) -> powersim
+#' # Print results
+#' print(powersim)
 #' @export
 print.mp_power <- function(x, ...) {
     cli::cli_h2('Power Analysis Specification')
@@ -458,9 +563,28 @@ print.mp_power <- function(x, ...) {
     invisible(x)
 }
 
-#' Summary for `mp_power`
-#'
+#' Summarizes a [`mlmpower::mp_power`]
+#' @description
+#' Summarizes a [`mlmpower::mp_power`] in a human readable format.
+#' This is a simple wrapper for [`mlmpower::print.mp_power`].
+#' @param object a [`mlmpower::mp_power`].
+#' @param ... other arguments not used by this method.
+#' @returns Invisibly returns the original variable.
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = 0.1)
+#' )
+#' # Set seed
+#' set.seed(19723)
+#' # Create data set and analyze
+#' # Note: Generally Use more than 50 replications
+#' model |> power_analysis(50, 5, 50) -> powersim
+#' # Summarizes results
+#' summary(powersim)
 #' @export
 summary.mp_power <- function(object, ...) {
-    object
+    print(object)
 }

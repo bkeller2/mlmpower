@@ -1,4 +1,12 @@
-#' Specify random correlations
+#' @rdname mp_corr_func
+#' @name mp_corr_func
+#' @title Functions for Generating Correlations
+#' @description
+#' Specify a random correlation that is uniform between `lower` and `upper`
+#' @param lower the lower bound of the distribution.
+#' @param upper the upper bound of the distribution.
+#' @returns A `mp_corr_func` that generates the desired correlation
+#' @seealso [`mlmpower::correlations()`]
 #' @export
 random <- function(lower, upper) {
     force(lower)
@@ -23,7 +31,9 @@ random <- function(lower, upper) {
     )
 }
 
-#' Specify fixed correlations
+#' Specify a fixed correlation is fixed at `value`
+#' @rdname mp_corr_func
+#' @param value the fixed value for the correlation.
 #' @export
 fixed <- function(value) {
     force(value)
@@ -41,7 +51,6 @@ fixed <- function(value) {
 }
 
 #' Internal function to check if a specific corr is fixed
-#'
 #' @noRd
 is_fixed <- function(x) {
     if (!is.function(x)) return(TRUE)
@@ -68,7 +77,6 @@ mean.mp_corr_func <- function(x, ...) {
 }
 
 #' Internal function to check if all correlations are fixed
-#'
 #' @noRd
 is_fixed_cor <- function(x) {
     is_fixed(x$within) &
@@ -77,7 +85,6 @@ is_fixed_cor <- function(x) {
 }
 
 #' Check if types are valid for a correlation
-#'
 #' @noRd
 valid_corr_type <- function(x) {
     switch(
@@ -91,7 +98,6 @@ valid_corr_type <- function(x) {
 
 
 #' Internal function for mp_correlations object
-#'
 #' @noRd
 new_correlation <- function(type, value) {
     if (missing(type)) {
@@ -113,8 +119,36 @@ new_correlation <- function(type, value) {
     )
 }
 
-#' Set up correlation defaults
-#'
+#' Specify the Correlation Structure for the Model
+#' @aliases mp_corr mp_correlations
+#' @description
+#' Creates a list of correlations to be added to a [`mlmpower::mp_model`].
+#' @param within a single numeric value or [`mlmpower::mp_corr_func`] that specifies random correlations.
+#' Corresponds to the level-1 correlation among predictors.
+#' @param between a single numeric value or [`mlmpower::mp_corr_func`] that specifies random correlations.
+#' Corresponds to the level-2 correlation among predictors.
+#' @param randeff a single numeric value or [`mlmpower::mp_corr_func`] that specifies random correlations.
+#' Corresponds to the random effects correlation among predictors.
+#' @details
+#' The default values are `random(0.1, 0.3)`.
+#' Currently `randeff` are required to be zero if more than one random slope is in the model.
+#' @returns A list that corresponds to each correlation value.
+#' @seealso [`mlmpower::random()`] [`mlmpower::fixed()`]
+#' @examples
+#' (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(
+#'         icc = c(0.1, 0.2),
+#'         within = 0.3
+#'     )
+#'     # Defaults
+#'     + correlations(
+#'         within  = random(0.1, 0.3),
+#'         between = random(0.1, 0.3),
+#'         randeff = random(0.1, 0.3)
+#'     )
+#' )
 #' @export
 correlations <- function(
         within,
@@ -142,7 +176,6 @@ correlations <- function(
 }
 
 #' Internal function to create default correlations
-#'
 #' @noRd
 default_correlations <- function() {
     structure(
@@ -159,7 +192,6 @@ default_correlations <- function() {
 }
 
 #' Adds correlations to `mp_base` class
-#'
 #' @noRd
 add.mp_corr <- function(x, y) {
     # Add as correlation if model
@@ -173,8 +205,23 @@ add.mp_corr <- function(x, y) {
 }
 
 
-#' Prints `mp_correlations` class
-#'
+#' Prints a [`mlmpower::mp_correlations`]
+#' @description
+#' Prints a [`mlmpower::mp_correlations`] in a human readable format.
+#' @param x a [`mlmpower::mp_correlations`].
+#' @param ... other arguments not used by this method.
+#' @returns Invisibly returns the original variable.
+#' @examples
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(
+#'         icc = c(0.1, 0.2),
+#'         within = 0.3
+#'     )
+#' )
+#' # Print correlations only
+#' print(model$corrs)
 #' @export
 print.mp_correlations <- function(x, ...) {
     cli::cli_ul(

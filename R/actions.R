@@ -1,6 +1,4 @@
-
 #' Check if types are valid for an action
-#'
 #' @noRd
 valid_action_type <- function(x) {
     switch(
@@ -12,7 +10,6 @@ valid_action_type <- function(x) {
 }
 
 #' Generate Base action for mlmpower
-#'
 #' @noRd
 new_action <- function(type, name, weight) {
     if (missing(type)) {
@@ -41,8 +38,26 @@ is.action <- function(x) {
     inherits(x, 'mp_action')
 }
 
-#' Add a random slope
-#'
+#' Create a Random Slope in a Model
+#' @description
+#' Creates a random slope that can be added to a [`mlmpower::mp_model`].
+#' @param name a character string that references a variable's name
+#' @param weight a single numeric value specifying the variable's contribution to the variance explained metric.
+#' Weights are normalized across all variables of the same level.
+#' @returns A [`mlmpower::mp_action`] that can be added to a [`mlmpower::mp_model`].
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(
+#'         icc = 0.1,
+#'         within = 0.1,
+#'         random_slope = 0.03
+#'     )
+#' )
+#' # Add random slope to the model
+#' model + random_slope('X')
 #' @export
 random_slope <- function(name, weight = 1) {
     if (!is.character(name)) {
@@ -75,8 +90,28 @@ random_slope <- function(name, weight = 1) {
 }
 
 
-#' Add an interaction effect
+#' Create a Product Term in a Model
+#' @description
+#' Creates a product term between two variables that can be added to a [`mlmpower::mp_model`].
+#' @param name1 a character string that references the first variable's name
+#' @param name2 a character string that references the second variable's name
+#' @param weight a single numeric value specifying the variable's contribution to the variance explained metric.
+#' Weights are normalized across all variables of the same level.
+#' @details
+#' Currently the product term is only limited to cross-level
+#' interactions between a level-1 centered within cluster variable (`icc = 0`)
+#' and level-2 variable.
 #'
+#' @returns A [`mlmpower::mp_action`] that can be added to a [`mlmpower::mp_model`].
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X', icc = 0.0)
+#'     + between_predictor('Z')
+#' )
+#' # Add random slope to the model
+#' model + product('X', 'Z')
 #' @export
 product <- function(name1, name2, weight = 1) {
     if (!is.character(name1) | !is.character(name2)) {
@@ -100,7 +135,6 @@ product <- function(name1, name2, weight = 1) {
 
 
 #' Adds effect size to `mp_base` class
-#'
 #' @noRd
 `add.mp_action` <- function(x, y) {
     # Add as actions if model
@@ -158,8 +192,8 @@ product <- function(name1, name2, weight = 1) {
 
 
 #' Converts a `mp_action` class into a single row `data.frame`
-#' @export
-as.data.frame.mp_action <- function(x, ...) {
+#' @noRd
+action_to_row <- function(x) {
     data.frame(
         `type` = switch(
             x$type,

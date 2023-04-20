@@ -2,10 +2,29 @@
 % Please edit documentation in R/model.R
 \name{summary.mp_model}
 \alias{summary.mp_model}
-\title{Provides parameter summary of a `mp_model` object}
+\title{Obtain the Parameter Summaries for A \code{\link{mp_model}}}
 \usage{
 \method{summary}{mp_model}(object, ...)
 }
+\arguments{
+\item{object}{a \code{\link{mp_model}}}
+
+\item{...}{other arguments not used by this method.}
+}
+\value{
+A \code{\link{mp_parameters}} object that contains the population parameters based on the model.
+If random correlations are used the average correlation is used to compute the parameters.
+If multiple ICC's are specified then a named \code{\link[base:list]{base::list}} is
+returned containing the parameter value for each ICC value.
+}
 \description{
-Provides parameter summary of a `mp_model` object
+Provide the summarized parameter estimates for a \code{\link{mp_model}},
+including the variance explained break downs.
+}
+\examples{
+summary(
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(icc = cross_sectional)
+)
 }
