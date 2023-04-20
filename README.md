@@ -14,7 +14,7 @@ remotes::install_github('bkeller2/mlmpower')
 Please use the [Issues](https://github.com/bkeller2/mlmpower/issues) tab.
 
 ## To Do List
+- [x] Complete and Test Implementation
 - [x] Add Documentation
 - [ ] Add Vignettes
-- [ ] Release 1.0
-- [ ] Submit to CRAN
+- [ ] Release 1.0 and Submit to CRAN
