@@ -17,4 +17,4 @@ Please use the [Issues](https://github.com/bkeller2/mlmpower/issues) tab.
 - [x] Complete and Test Implementation
 - [x] Add Documentation
 - [ ] Add Vignettes
-- [ ] Release 1.0 and Submit to CRAN
+- [ ] Release 1.0 and submit to CRAN
