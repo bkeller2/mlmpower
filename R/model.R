@@ -38,7 +38,7 @@
 #' ```
 #'
 #' For more detailed information see the help vignette by running the following:
-#' ```{r}
+#' ```
 #' vignette(package = 'mlmpower')
 #' ```
 NULL

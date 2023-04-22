@@ -52,7 +52,6 @@ will result in a centered within cluster (CWC) predictor.
 
 See vignettes for more details.
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{vignette(package = 'mlmpower')
-#> no vignettes found
+\if{html}{\out{<div class="sourceCode">}}\preformatted{vignette(package = 'mlmpower')
 }\if{html}{\out{</div>}}
 }

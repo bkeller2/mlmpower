@@ -46,8 +46,7 @@ This feature can be useful when programmatically generating a model.
 
 For more detailed information see the help vignette by running the following:
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{vignette(package = 'mlmpower')
-#> no vignettes found
+\if{html}{\out{<div class="sourceCode">}}\preformatted{vignette(package = 'mlmpower')
 }\if{html}{\out{</div>}}
 }
 \seealso{

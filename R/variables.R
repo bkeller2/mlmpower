@@ -11,7 +11,7 @@
 #' will result in a centered within cluster (CWC) predictor.
 #'
 #' See vignettes for more details.
-#' ```{r}
+#' ```
 #' vignette(package = 'mlmpower')
 #' ```
 NULL

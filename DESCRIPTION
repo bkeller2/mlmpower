@@ -19,3 +19,7 @@ Imports:
     lme4,
     lmerTest,
     varTestnlme
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

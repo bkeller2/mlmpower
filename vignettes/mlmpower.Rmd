@@ -1,0 +1,658 @@
+---
+title: "Using `mlmpower` Package to Conduct Multilevel Power Analysis"
+output: rmarkdown::html_vignette
+author: Brian T. Keller
+vignette: >
+  %\VignetteIndexEntry{Using `mlmpower` Package to Conduct Multilevel Power Analysis}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>"
+)
+# Load Library
+library(mlmpower)
+
+# Set seed
+set.seed(981723)
+
+# Load Cache
+powersim1 <- readRDS('powersim1.rds')
+powersim2 <- readRDS('powersim2.rds')
+powersim3 <- readRDS('powersim3.rds')
+```
+
+## Illustration 1: Cross-Sectional Power Analysis
+
+The first illustration demonstrates a power analysis for a
+cross-sectional application of the following multilevel model. To
+provide a substantive context, consider a prototypical education example
+where students are nested in schools. Intraclass correlations for
+achievement-related outcomes often range between .10 and .25 (Hedges &
+Hedberg, 2007; Hedges & Hedberg, 2013; Sellstrom & Bremberg, 2006;
+Spybrook et al., 2011; Stockford, 2009). To accommodate uncertainty
+about this important parameter, the power simulations investigate
+intraclass correlation values of .10 and .25.
+
+The multilevel model for the illustration is
+
+$$
+\begin{split}
+Y_{ij} &= \left( \beta_{0} + b_{0j} \right) + \left( \beta_{1} + b_{1j} \right)\left( X_{1ij} - {\overline{X}}_{1j} \right) + \beta_{2}\left( X_{2ij} - {\overline{X}}_{2} \right) \\
+&\phantom{=}+ \ \beta_{3}\left( Z_{1j} - {\overline{Z}}_{1} \right) + \ \beta_{4}\left( Z_{2j} - {\overline{Z}}_{2} \right) + \beta_{5}\left( X_{1ij} - {\overline{X}}_{1j} \right)\left( Z_{1j} - {\overline{Z}}_{1} \right) + \varepsilon_{ij}\\[1em]
+\mathbf{b}_{j}\ &\sim\ N\left( 0,\mathbf{\Sigma}_{\mathbf{b}} \right)\ \ \ \ \ \mathbf{\Sigma}_{\mathbf{b}}=\begin{pmatrix}
+\sigma_{b_{0}}^{2} & \\
+\sigma_{b_{1},b_{0}} & \sigma_{b_{1}}^{2} \\
+\end{pmatrix}\mathbf{\ \ \ \ \ }\varepsilon_{ij}\ \sim\ N(0,\sigma_{\varepsilon}^{2})
+\end{split}
+$$
+
+where $Y_{ij}$ is the outcome score for observation *i* in cluster *j*,
+$X_{1ij}$ is a focal within-cluster predictor, ${\overline{X}}_{1j}$ is
+the variable's level-2 cluster mean, $X_{2ij}$ is a grand mean centered
+level-1 covariate, $Z_{1j}$ is a level-2 moderator score for cluster
+*j*, and $Z_{2j}$ is a level-2 covariate. Turning to the residual terms,
+$b_{0j}$ and $b_{1j}$ are between-cluster random effects that capture
+residual variation in the cluster-specific intercepts and slopes, and
+$\varepsilon_{ij}$ is a within-cluster residual. By assumption, the
+random effects follow a multivariate normal distribution with a
+between-cluster covariance matrix $\mathbf{\Sigma}_{\mathbf{b}}$, and
+within-cluster residuals are normal with constant variance
+$\sigma_{\varepsilon}^{2}$.
+
+Importantly, group mean centering $X_{1}$ yields a pure within-cluster
+predictor, whereas grand mean centering $X_{2}$ gives a predictor with
+two sources of variation. Although it need not be true in practice, the
+within- and between-cluster parts of any level-1 predictor variables
+with non-zero intraclass correlations share a common slope coefficient.
+To simplify notation, Equation 1 can be rewritten as
+
+$$Y_{ij} = \left( \beta_{0} + b_{0j} \right) + \left( \beta_{1} + b_{1j} \right)X_{1ij}^{w} + \beta_{2}\left( X_{2ij}^{w} + X_{2j}^{b} \right) + \beta_{3}Z_{1j}^{b} + \beta_{4}Z_{2j}^{b} + \beta_{5}X_{1ij}^{w}Z_{1j}^{b} + \varepsilon_{ij}$$
+
+where the *w* and *b* superscripts reference within- and between-cluster
+deviation scores, respectively.
+
+The key inputs to the model object are the unconditional intraclass
+correlation and effect size values. This illustration investigates power
+for intraclass correlation values of .10 and .25. The within- and
+between-cluster fixed effects are set to $R_{w}^{2}$ = .065 and
+$R_{b}^{2}$ = .065, respectively, the sum of which corresponds to
+Cohen's (1988) medium effect size benchmark. Note that $R_{b}^{2}$
+cannot exceed the outcome's intraclass correlation, as this would imply
+that between-cluster predictors explain more than 100% of the available
+variance. Following conventional wisdom that interaction effects tend to
+produce small effects (Aguinis, Beaty, Boik, & Pierce, 2005; Chaplin,
+1991), the cross-level product is assigned $R_{p}^{2}$ = .01. Finally,
+the random coefficient effect size is set to $R_{rc}^{2}$ = .03 based on
+values from Table 2 in Enders, Keller, and Woller (2023).
+
+By default, `mlmpower` assigns equal weights to all quantities
+contributing to a particular source of variance. To assign non-uniform
+weights, assume $X_{1}$ and $Z_{1}$ (the interacting variables) are the
+focal predictors and $X_{2}$ and $Z_{2}$ are covariates. To mimic a
+situation where the covariates explain a small amount of variation, the
+fixed effect $R^{2}$ values are predominantly allocated to the focal
+predictors using weights of .80 and .20. A small covariate allocation
+could be appropriate for a set of background or sociodemographic
+characteristics that weakly predict the outcome. Researchers often need
+power estimates for individual partial regression slopes. Although the
+weights do not exactly carve $R_{w}^{2}$ and $R_{b}^{2}$ into additive
+components when predictors are correlated, adopting weak associations
+among the regressors allows us to infer that each focal predictor
+roughly accounts for 5% of the explained variation at each level (i.e.,
+$.80 \times R_{w}^{2}$ or $R_{b}^{2} \approx .05$).
+
+The following code block shows the `mlmpower` model object for the
+example.
+
+```{r}
+example1 <- (
+    effect_size(
+        icc          = c(.10, .25),
+        within       = .065,
+        between      = .065,
+        product      = .01,
+        random_slope = .03
+    )
+    + outcome('y', mean = 50, sd = 10)
+    + within_predictor('x1', icc = 0, weight = .80)
+    + within_predictor('x2', weight = .20)
+    + between_predictor('z1', weight = .80)
+    + between_predictor('z2', weight = .20)
+    + product('x1','z1', weight = 1)
+    + random_slope('x1', weight = 1)
+)
+```
+
+The `mlmpower` package groups $R^{2}$ values and intraclass correlations
+into a single object called effect_size(), with the five inputs
+separated by commas. The within argument corresponds to $R_{w}^{2}$, the
+between argument aligns with $R_{b}^{2}$, the product argument specifies
+$R_{p}^{2}$, and the random_slope argument corresponds to $R_{rc}^{2}$.
+The icc argument assigns a global intraclass correlation to all level-1
+variables, and separate simulations are performed for each requested
+level.
+
+Variable attributes are referenced by adding the following objects:
+`outcome()`, `within_predictor()`, `between_predictor()`, `product()`,
+and `random_slope()`. All five objects have an argument for the variable
+name, weight (`weight =`), mean (`mean =`), and standard deviation
+(`sd =`). Level-1 variables additionally have an intraclass correlation
+argument (`icc =`) that supersedes the global setting in
+`effect_size()`.
+
+The previous code block assigns explicit weights to all variables
+contributing to a given effect. The unit weights in the `product()` and
+`random_slope()` objects result from a single variable determining those
+sources of variation. Next, the
+`within_predictor('x1', icc = 0, weight = .80)` object overrides the
+global intraclass correlation setting, defining $X_{1}$ as a pure
+within-cluster deviation variable with no between-cluster variation.
+Finally, with the exception of the outcome variable, which has a mean
+and standard deviation of 50 and 10, the script accepts the default
+settings for the means and variances of the predictors (0 and 1,
+respectively).
+
+The multilevel model parameters also require three sets of correlations:
+within-cluster correlations among level-1 predictors, between-cluster
+correlations among level-2 predictors, and random effect correlations.
+These correlations are optional, but they can specified using the
+`correlations()` object. The earlier code block omits this object,
+thereby accepting the default specification. When the `correlations()`
+object is omitted, the `mlmpower` package iteratively samples all
+correlations from a uniform distribution between .10 and .30, such that
+the resulting power estimates average over a distribution of possible
+associations. This default range spans Cohen's (1988) small to medium
+effect size benchmarks, and it brackets common correlation values from
+published research (Bosco, Aguinis, Singh, Field, & Pierce, 2015; Funder
+& Ozer, 2019; Gignac & Szodorai, 2016).
+
+The default specifications could be invoked by explicitly appending the
+`correlations()` object to the earlier script, as follows.
+
+```{r}
+example1 <- (
+    effect_size(
+        icc          = c(.10, .25),
+        within       = .065,
+        between      = .065,
+        product      = .01,
+        random_slope = .03
+    )
+    + outcome('y', mean = 50, sd = 10)
+    + within_predictor('x1', icc = 0, weight = .80)
+    + within_predictor('x2', weight = .20)
+    + between_predictor('z1', weight = .80)
+    + between_predictor('z2', weight = .20)
+    + product('x1','z1', weight = 1)
+    + random_slope('x1', weight = 1)
+    + correlations(
+        within  = random(0.1, 0.3),
+        between = random(0.1, 0.3),
+        randeff = random(0.1, 0.3)
+    )
+)
+```
+
+Researchers can modify the upper and lower limits of each correlation
+range, or they can specify a constant correlation by inputting a scalar
+value. For example, specifying `randeff = 0` would define
+$\mathbf{\Sigma}_{\mathbf{b}}$ as a diagonal matrix. The illustrative
+simulations presented in Enders et al. (2023) suggest that predictor and
+random effect correlations tend not to matter very much.
+
+It may be instructive to inspect the population parameters prior to
+running the simulation. Executing `summary(example1)` returns tabular
+summaries of the multilevel model parameters.
+
+```{r}
+summary(example1)
+```
+
+Having specified the target model, you next use the `power_analysis()`
+function to conduct simulations. The function requires four inputs: the
+model argument specifies the parameter value object (e.g., `example1`),
+the replications input specifies the number of artificial data sets,
+`n_between` is a vector of level-2 sample sizes, and `n_within` is a
+vector of level-1 sample sizes (i.e., the number of observations per
+cluster). The code block below pairs four level-2 sample size values
+($J$ = 30, 60, 90, and 120) with three level-1 sample sizes ($n_{j}$ =
+10, 20, or 30 observations per cluster), and it requests 2,000
+artificial data sets for each combination.
+
+```{r, eval = FALSE}
+# Set seed for replicable results
+set.seed(2318971)
+
+# Run Power Analysis
+powersim1 <-
+    power_analysis(
+        model = example1,
+        replications = 2000,
+        n_between = c(30, 60, 90, 120),
+        n_within = c(10, 20, 30)
+    )
+```
+
+The package uses `lme4` (Bates et al., 2021) for model fitting, and it
+defaults to an alpha level of .05 for all significance tests.
+Significance tests of random slope variation use a likelihood ratio test
+with a mixture chi-square reference distribution (i.e., a chi-bar
+distribution; Snijders & Bosker, 2012, p. 99), as implemented in the
+`varTestnlme` package (Baey & Kuhn, 2022). Executing `summary(powersim1)`
+returns the tabular summaries of the simulation results shown
+
+```{r}
+summary(powersim1)
+```
+
+## Illustration 2: Growth Curve Power Analysis
+
+The second illustration demonstrates a power analysis for a longitudinal
+growth curve model with a pair of cross-level interactions involving a
+binary level-2 moderator. Intraclass correlations for longitudinal and
+intensive repeated measures data often reach values of .40 or higher
+(Arend & Schäfer, 2019; Bolger & Laurenceau, 2013; Singer & Willett,
+2003). To accommodate uncertainty about this important parameter, the
+simulation investigates intraclass correlation values of .40 and .60.
+
+The multilevel model for the illustration is
+
+$$
+\begin{split}
+Y_{ij} &= \left( \beta_{0} + b_{0j} \right) + \left( \beta_{1} + b_{1j} \right)X_{1ij}^{w} + \beta_{2}\left( X_{2ij}^{w} + X_{2j}^{b} \right) + \beta_{3}\left( X_{3ij}^{w} + X_{3j}^{b} \right)\\
+&\phantom{=}+ \ \beta_{4}Z_{1j}^{b} + \ \beta_{5}Z_{2j}^{b} + \beta_{6}Z_{3j}^{b} + \beta_{7}X_{1ij}^{w}Z_{1j}^{b} + \varepsilon_{ij} \\
+\mathbf{b}_{j}\ &\sim\ N\left( 0,\mathbf{\Sigma}_{\mathbf{b}} \right)\ \ \ \ \ \mathbf{\Sigma}_{\mathbf{b}}=\begin{pmatrix}
+\sigma_{b_{0}}^{2} & \\
+\sigma_{b_{1},b_{0}} & \sigma_{b_{1}}^{2} \\
+\end{pmatrix}\mathbf{\ \ \ \ \ }\varepsilon_{ij}\ \sim\ N(0,\sigma_{\varepsilon}^{2})
+\end{split}
+$$
+
+Following established notation (see Illustration 1), the *w* and *b*
+superscripts reference within- and between-cluster deviation scores,
+respectively. The explanatory variables include a time score predictor
+with a random coefficient, a pair of time-varying covariates, a binary
+level-2 moderator, a pair of level-2 covariates, and a cross-level
+(group-by-time) interaction. For the purposes of weighting, we
+designated $X_{1}$ and $Z_{1}$ (the interacting variables) as focal
+predictors, $X_{2}$ and $X_{3}$ as level-1 (time-varying) covariates,
+and $Z_{2}$ and $Z_{3}$ as level-2 covariates. To mimic the scaling of a
+typical temporal index, we assume the major time increments are coded
+$X_{1}^{w}$ = (0, 1, 2, 3, 4).
+
+A brief discussion of $Z_{1}$ (the binary moderator) is warranted before
+continuing. First, like other level-2 variables, this variable's
+population mean must be 0 (i.e., $Z_{1}$ is centered in the population)
+in order to maintain the orthogonality of the cross-level interaction
+terms. Grand mean centering a level-2 binary predictor creates an
+ANOVA-like contrast code, such that $\beta_{0}$ is the grand mean and
+$\beta_{4}$ is the predicted group mean difference when $X_{1}^{w}$ (the
+time score predictor) equals 0. In this case, a code of 0 corresponds to
+the baseline assessment. Because $\beta_{4}$ is a conditional effect
+that represents the group mean difference at the first occasion,
+$Z_{1}$'s contribution to the between-cluster effect size depends on
+whether we view this regressor as a naturally occurring classification
+or an intervention assignment indicator. In the former case, we might
+expect a group mean difference at baseline, and the presence of such a
+difference would require a non-zero weight. In contrast, random
+assignment to conditions would eliminate a group mean difference at
+baseline, and $Z_{1}$'s weight would equal 0. Note that this conclusion
+changes if the time scores are coded differently. For illustration
+purposes, we assume $Z_{1}$ is an intervention assignment indicator.
+
+The key inputs to the model object are the unconditional intraclass
+correlation and effect size values. This illustration investigates power
+for intraclass correlation values of .40 and .60. The within- and
+between-cluster fixed effects are set to $R_{w}^{2}$ = .13 and
+$R_{b}^{2}$ = .065, respectively; the former corresponds to Cohen's
+(1988) medium effect size benchmark. Note that $R_{b}^{2}$ cannot exceed
+the outcome's intraclass correlation, as this would imply that
+between-cluster predictors explain more than 100% of the available
+variance. Following conventional wisdom that interaction effects tend to
+produce small effects (Aguinis et al., 2005; Chaplin, 1991), $R_{p}^{2}$
+= .05 is assigned to the pair of cross-level product terms. Finally, the
+random coefficient effect size is set to $R_{rc}^{2}$ = .03 based on
+values from Table 2 in Enders et al. (2023).
+
+To refresh, we designated $X_{1}$ and $Z_{1}$ (the interacting
+variables) as focal predictors, $X_{2}$ and $X_{3}$ as level-1
+(time-varying) covariates, and $Z_{2}$ and $Z_{3}$ as level-2
+covariates. To mimic a situation where the linear change predominates
+the level-1 model, we used weights of .50, .25, .25 to allocate the
+within-cluster $R^{2}$ to $X_{1}$, $X_{2}$, and $X_{3}$. At level-2, we
+used weights equal to 0, .50, .50 to allocate the between-cluster
+$R^{2}$ to $Z_{1}$, $Z_{2}$, and $Z_{3}$. As noted previously, $Z_{1}$'s
+slope represents the group mean difference at baseline, and we are
+assuming that random assignment nullifies this effect. Finally,
+$R_{p}^{2}$ and $R_{rc}^{2}$ do not require weights because a single
+variable determines each source of variation.
+
+To illustrate how to modify default correlation settings, we sampled
+within-cluster predictor correlations between the range of .20 and .40
+under the assumption that the time scores could have stronger
+associations with other time-varying predictors. We similarly sampled
+the random effect correlations between the range of .30 and .50 to mimic
+a scenario where higher baseline scores (i.e., random intercepts) are
+associated with higher (more positive) growth rates. Finally, we adopted
+the default correlation range for the between-cluster predictors. The
+simulations from the previous cross-sectional example suggest that the
+correlations are somewhat arbitrary and would not have a material impact
+on power estimates.
+
+The following code block shows the `mlmpower` model object for this
+example.
+
+```{r}
+example2 <- (
+    effect_size(
+        icc          = c(.40, .60),
+        within       = .13,
+        between      = .065,
+        product      = .03,
+        random_slope = .10
+    )
+    + outcome('y', mean = 50, sd = 10)
+    + within_time_predictor('x1', weight = .50, values = 0:4)
+    + within_predictor('x2', weight = .25)
+    + within_predictor('x3', weight = .25)
+    + between_binary_predictor('z1', proportion = .50, weight = 0)
+    + between_predictor('z2', weight = .50)
+    + between_predictor('z3', weight = .50)
+    + product('x1','z1', weight = 1)
+    + random_slope('x1', weight = 1)
+    + correlations(
+        within  = random(.20, .40),
+        between = random(.10, .30),
+        randeff = random(.30, .50)
+    )
+)
+```
+
+The `mlmpower` package groups $R^{2}$ values and intraclass correlations
+into a single object called `effect_size()`, with the five inputs
+separated by commas. The within argument corresponds to $R_{w}^{2}$, the
+between argument aligns with $R_{b}^{2}$, the product argument specifies
+$R_{p}^{2}$, and the random_slope argument corresponds to $R_{rc}^{2}$.
+The icc argument assigns a global intraclass correlation to all level-1
+variables, and separate simulations are performed for each requested
+level.
+
+Variable attributes are referenced by adding the following base objects:
+`outcome()`, `within_predictor()`, `between_predictor()`, `product()`,
+and `random_slope()`. All five objects have an argument for the variable
+name, weight (`weight =`), mean (`mean =`), and standard deviation
+(`sd =`). Level-1 variables additionally have an intraclass correlation
+argument (`icc =`) that supersedes the global setting in
+`effect_size()`.
+
+This illustration additionally uses the `within_time_predictor()` object
+to specify a set of fixed time scores for $X_{1}$, and it uses
+`between_binary_predictor()` object to define the level-2 moderator
+$Z_{1}$ as a binary predictor. In addition to a name and weight, the
+`within_time_predictor()` object requires a vector of time scores as an
+argument (`values =`). The `between_binary_predictor()` object requires
+a name, weight, and the highest category proportion (`proportion =`).
+
+First, the `within_time_predictor()` object specifies $X_{1}$ as a
+temporal predictor with the fixed set of time scores described earlier.
+The `values = 0:4` argument specifies an integer sequence, but unequally
+spaced increments can also be specified using a vector as input (e.g.,
+`values = c(0,1,3,6)`). This object does not require a mean or standard
+deviation argument, as these quantities are determined from the time
+scores. Additionally, the variable's intraclass correlation is
+automatically fixed to 0 because the time scores are constant across
+level-2 units. Next the
+`between_binary_predictor('z1', proportion = .50, weight = 0)` object
+specifies $Z_{1}$ (the moderator variable) as a binary predictor with a
+50/50 split. This object does not require a mean or standard deviation
+argument, as the category proportions determine these quantities.
+Finally, within the exception of the outcome, the code block uses
+default values for all means and standard deviations (0 and 1,
+respectively). The means and standard deviations of the time scores and
+binary predictor are automatically determined by the user inputs.
+
+The multilevel model parameters also require three sets of correlations:
+within-cluster correlations among level-1 predictors, between-cluster
+correlations among level-2 predictors, and random effect correlations.
+These correlations are optional, but they can specified using the
+`correlations()` object. This example samples within-cluster predictor
+correlation values between .20 and .40 (e.g., to mimic a situation where
+the time scores have salient correlations with other repeated measures
+predictors). Random effect correlation values are similarly sampled
+between the range of .30 and .50 to mimic a scenario where higher
+baseline scores (i.e., random intercepts) are associated with higher
+(more positive) growth rates. Finally, the script specifies the default
+setting for between-cluster correlations, which is to iteratively sample
+correlation values between .10 and .30.
+
+It may be instructive to inspect the population parameters prior to
+running the simulation. Executing `summary(example2)` returns tabular
+summaries of the multilevel model parameters.
+
+```{r}
+summary(example2)
+```
+
+Having specified the target model, you next use the `power_analysis()`
+function to conduct simulations. The function requires four inputs: the
+model argument specifies the parameter value object (e.g., `example2`),
+the `replications` input specifies the number of artificial data sets,
+`n_between` is a vector of level-2 sample sizes, and `n_within` is a
+vector of level-1 sample sizes (i.e., the number of observations per
+cluster). The code block below specifies six level-2 sample size
+conditions ($J =$ 50, 60, 70, 80, 90, and 100), each with five repeated
+measurements and 2,000 replications.
+
+```{r, eval = FALSE}
+# Set seed for replicable results
+set.seed(12379)
+
+# Run Power Analysis
+powersim2 <-
+    power_analysis(
+        model = example2,
+        replications = 2000,
+        n_between = c(50, 60, 70, 80, 90, 100),
+        n_within = 5
+    )
+```
+
+
+The package uses `lme4` (Bates et al., 2021) for model fitting, and it
+defaults to an alpha level of .05 for all significance tests.
+Significance tests of random slope variation use a likelihood ratio test
+with a mixture chi-square reference distribution (i.e., a chi-bar
+distribution; Snijders & Bosker, 2012, p. 99), as implemented in the
+`varTestnlme` package (Baey & Kuhn, 2022). Executing
+`summary(powersim2)` returns the tabular summaries of the simulation
+results shown below.
+
+```{r}
+summary(powersim2)
+```
+
+## Illustration 3 Vignette: Cluster-Randomized Design
+
+The third vignette demonstrates a power analysis for a
+cluster-randomized design (Raudenbush, 1997) where level-2 units are
+randomly assigned to one of two experimental conditions. To provide a
+substantive context, consider a prototypical education example where
+students are nested in schools, and schools are the unit of
+randomization. Intraclass correlations for achievement-related outcomes
+often range between .10 and .25 (Hedges & Hedberg, 2007; Hedges &
+Hedberg, 2013; Sellström & Bremberg, 2006; Spybrook et al., 2011;
+Stockford, 2009). To accommodate uncertainty about this important
+parameter, the simulation investigates intraclass correlation values of
+.10 and .25.
+
+The multilevel model for the illustration is
+
+$$
+\begin{split}
+Y_{ij} &= \beta_{0} + \beta_{1}\left( X_{1ij}^{w} + X_{1j}^{b} \right) + \beta_{2}\left( X_{2ij}^{w} + X_{2j}^{b} \right)\\
+&\phantom{=}+ \ \beta_{3}\left( X_{3ij}^{w} + X_{3j}^{b} \right) + \beta_{4}\left( X_{4ij}^{w} + X_{4j}^{b} \right) + \ \beta_{5}Z_{1j}^{b} + b_{0j} + \varepsilon_{ij}
+\end{split}
+$$
+
+where $X_{1}$ to $X_{4}$ are grand mean centered level-1 covariates, and
+$Z_{1}$ is a binary intervention assignment indicator. Following
+established notation, the *w* and *b* superscripts reference within- and
+between-cluster deviation scores, respectively. The notation conveys
+that all level-1 predictors contain within- and between-cluster
+variation. By default, all predictors are centered, including the binary
+dummy code. Grand mean centering a level-2 binary predictor creates an
+ANOVA-like contrast code, such that $\beta_{0}$ is the grand mean and
+$\beta_{5}$ is the predicted mean difference, adjusted for the
+covariates. Turning to the residual terms, $b_{0j}$ is a between-cluster
+random effect that captures residual variation in the cluster-specific
+intercepts, and $\varepsilon_{ij}$ is a within-cluster residual. By
+assumption, both residuals are normal with constant variance.
+
+The key inputs to the model object are the unconditional intraclass
+correlation and effect size values. This illustration investigates power
+for intraclass correlation values of .10 and .25. To mimic a scenario
+with a strong covariate set (e.g., one that includes a pretest measure
+of the outcome), the within-cluster effect size is set to $R_{w}^{2}$ =
+.18 (a value roughly midway between Cohen's small and medium
+benchmarks). Most of this variation was allocated to $X_{1}$ (the
+pretest) by assigning it a weight of .70, and the remaining three
+predictors had their within-cluster weights set to .10. We previously
+argued that the allocation of the weights among covariates is arbitrary
+because these predictors are not the focus. To demonstrate that point,
+we conducted a second simulation that weighted the four level-1
+covariates equally.
+
+Turning to the level-2 predictor, researchers often prefer the Cohen's
+(1988) *d* effect size when working with binary explanatory variables.
+To illustrate, consider power for *d* = .40, the midway point between
+Cohen's small and medium benchmarks. Substituting this value into the
+conversion equation below returns $R_{b}^{2}$ = .038.
+
+$$R^{2} = \frac{d^{2}}{d^{2} + 4}$$
+
+The following code block shows the `mlmpower` model object for the
+example.
+
+```{r}
+example3 <- (
+    effect_size(
+        icc     = c(.10, .25),
+        within  = .18,
+        between = .038,
+    )
+    + outcome('y')
+    + within_predictor('x1', weight = .70)
+    + within_predictor('x2', weight = .10)
+    + within_predictor('x3', weight = .10)
+    + within_predictor('x4', weight = .10)
+    + between_binary_predictor('z1', proportion = .50, weight = 1)
+)
+
+```
+
+The `mlmpower` package groups $R^{2}$ values and intraclass correlations
+into a single object called effect_size(), with three inputs separated
+by commas. The within argument corresponds to $R_{w}^{2}$, the between
+argument aligns with $R_{b}^{2}$, and the icc argument assigns a global
+intraclass correlation to all level-1 variables. Separate simulations
+are performed for each requested level.
+
+Variable attributes for this example require three objects: `outcome()`,
+`within_predictor()`, and `between_binary_predictor()`. The first two
+objects have an argument for the variable name, weight (weight =), mean
+(`mean =`), standard deviation (`sd =`), and an intraclass correlation
+argument (`icc =`) that supersedes the global setting in
+`effect_size()`. The `between_binary_predictor()` object requires a
+name, weight, and the highest category proportion (`proportion =`).
+
+The previous code block assigns explicit weights to all variables
+contributing to a given effect, as described previously. The unit weight
+in the `between_binary_predictor()` object reflects the fact that this
+$Z_{1}$ solely determines $R_{b}^{2}$. Finally, the proportion argument
+assigns a 50/50 split to the level-2 groups.
+
+The multilevel model parameters also require two sets of correlations:
+within-cluster correlations among level-1 predictors, and
+between-cluster correlations among level-2 predictors (in this case, the
+cluster means and the intervention assignment indicator). These
+correlations are optional, but they can specified using the
+`correlations()` object. The earlier code block omits this object,
+thereby accepting the default specification. When the `correlations()`
+object is omitted, the `mlmpower` package iteratively samples all
+correlations from a uniform distribution between .10 and .30, such that
+the resulting power estimates average over a distribution of possible
+associations. This default range spans Cohen's (1988) small to medium
+effect size benchmarks, and it also brackets common correlations from
+published research (Bosco et al., 2015; Funder & Ozer, 2019; Gignac &
+Szodorai, 2016). The default specifications could be invoked by
+explicitly appending the `correlations()` object to the earlier script,
+as follows.
+
+```{r}
+example3 <- (
+    example3
+    + correlations(
+        within  = random(0.1, 0.3),
+        between = random(0.1, 0.3)
+    )
+)
+```
+
+Researchers can modify the upper and lower limits of each correlation
+range, or they can specify a constant correlation by inputting a scalar
+value. The illustrative simulations presented in Enders et al. (2023)
+suggest that predictor correlations tend not to matter very much.
+
+It may be instructive to inspect the population parameters prior to
+running the simulation. Executing `summary(example3)` returns tabular
+summaries of the multilevel model parameters.
+
+```{r}
+summary(example3)
+```
+
+Having specified the target model, you next use the `power_analysis()`
+function to conduct the simulations. The function requires four inputs:
+the model argument specifies the parameter value object (e.g.,
+`example3`), the `replications` input specifies the number of artificial
+data sets, `n_between` is a vector of level-2 sample sizes, and
+`n_within` is a vector of level-1 sample sizes (i.e., the number of
+observations per cluster). The code block below pairs four level-2
+sample size values ($J =$ 30, 60, 90, and 120) with two level-1 sample
+sizes ($n_{j} =$ 15 or 30 observations per cluster), and it requests
+2,000 artificial data sets for each combination.
+
+The package uses `lme4` (Bates et al., 2021) for model fitting, and it
+defaults to an alpha level of .05 for all significance tests. Executing
+`summary(powersim)` returns the tabular summaries of the simulation
+results shown below.
+
+```{r, eval = FALSE}
+# Set seed for replicable results
+set.seed(981723)
+
+# Run Power Analysis
+powersim3 <-
+    power_analysis(
+        model = example3,
+        replications = 2000,
+        n_between = c(30, 60, 90, 120),
+        n_within = c(15, 30)
+    )
+```
+
+The package uses `lme4` (Bates et al., 2021) for model fitting, and it
+defaults to an alpha level of .05 for all significance tests. Executing
+`summary(powersim3)` returns the tabular summaries of the simulation
+results shown below.
+
+```{r}
+summary(powersim3)
+```
