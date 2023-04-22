@@ -9,6 +9,25 @@ Currently this package is available via GitHub. To install use the following com
 remotes::install_github('bkeller2/mlmpower', build_vignettes = TRUE)
 ```
 
+## Using the Package
+
+A guide to using the package is provided through the vignette.
+
+If you set `build_vignettes = TRUE` then the following command should open up said vignette:
+```r
+vignette('mlmpower')
+```
+
+Additional details can be obtained throughout the documentation, starting with:
+```r
+?mlmpower::mlmpower
+```
+or
+
+```r
+help(package = 'mlmpower')
+```
+
 ## Bug Reporting and Feature Request
 Please use the [Issues](https://github.com/bkeller2/mlmpower/issues) tab.
 
