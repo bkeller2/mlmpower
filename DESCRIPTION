@@ -3,8 +3,7 @@ Type: Package
 Title: Power Analysis and Data Simulation for Multilevel Models
 Version: 0.2.0
 Authors@R: person("Brian T.", "Keller", email = "bk@utexas.edu",
-  role = c("aut", "cre"))
-Maintainer: Brian T. Keller <bk@utexas.edu>
+  role = c("aut", "cre", "cph"))
 Description: A declarative language for conducting power analyses with multilevel models.
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
