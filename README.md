@@ -1,6 +1,8 @@
 # mlmpower
 An R Package for simulating and completing  power analysis for multilevel models
 
+[![R-CMD-check](https://github.com/bkeller2/mlmpower/actions/workflows/check-standard.yaml/badge.svg)](https://github.com/bkeller2/mlmpower/actions/workflows/check-standard.yaml)
+
 ## Installing Package
 
 To install the package via CRAN run the following:
