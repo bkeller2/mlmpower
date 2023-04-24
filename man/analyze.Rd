@@ -4,13 +4,16 @@
 \alias{analyze}
 \title{Analyzes a single \code{\link{mp_data}} using \code{\link[lme4:lmer]{lme4::lmer}}}
 \usage{
-analyze(data, alpha = 0.05, ...)
+analyze(data, alpha = 0.05, no_lrt = FALSE, ...)
 }
 \arguments{
 \item{data}{a \code{\link{mp_data}}.}
 
 \item{alpha}{the significance level to determine if an effect is statistically significant.
-If \code{NULL} then no nested model testing is conducted}
+If \code{NULL} then no nested model testing is conducted.}
+
+\item{no_lrt}{do not perform additional likelihood ratio tests.
+Setting to \code{TRUE} will speed up the analysis because the model is only fit once.}
 
 \item{...}{other arguments passed to \code{\link[lme4:lmer]{lme4::lmer()}}.}
 }

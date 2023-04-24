@@ -226,7 +226,9 @@ is.mp_data <- function(x) {
 #' Analyzes a single [`mlmpower::mp_data`] based on the data generating model.
 #' @param data a [`mlmpower::mp_data`].
 #' @param alpha the significance level to determine if an effect is statistically significant.
-#' If `NULL` then no nested model testing is conducted
+#' If `NULL` then no nested model testing is conducted.
+#' @param no_lrt do not perform additional likelihood ratio tests.
+#' Setting to `TRUE` will speed up the analysis because the model is only fit once.
 #' @param ... other arguments passed to [`lme4::lmer()`].
 #' @returns A [`list`] that with the following named elements:
 #' - `estimates`: The estimates from fitting the model.
@@ -244,7 +246,7 @@ is.mp_data <- function(x) {
 #' # Create data set and analyze
 #' model |> generate(5, 50) |> analyze() -> results
 #' @export
-analyze <- function(data, alpha = 0.05, ...) {
+analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
 
     # Check Inputs
     if (!is.mp_data(data)) throw_error(
@@ -258,8 +260,10 @@ analyze <- function(data, alpha = 0.05, ...) {
         if (alpha <= 0 | alpha >= 1) throw_error(
             "{.arg alpha} must be a single number between 0 and 1."
         )
-
     }
+    if (!is.logical(no_lrt) & length(no_lrt) == 1) throw_error(
+        "{.arg no_lrt} must be a single logical value"
+    )
 
     # Make centering env
     e <- centering_env(data$`_id`)
@@ -272,15 +276,13 @@ analyze <- function(data, alpha = 0.05, ...) {
     full_reml <- quiet(lmerTest::lmer(f, data, ...))
 
     # Obtain LRT
-    if (!is.null(alpha)) {
-        if (!identical(f, f_nest)) {
-            full_ml <- quiet(lme4::lmer(f, data, REML = FALSE, ...))
-            nested <- quiet(lme4::lmer(f_nest, data, REML = FALSE, ...))
-            lrt <- varTestnlme::varCompTest(full_ml, nested, pval.comp = "bounds", output = FALSE)
-            rand_result <- c(omnibus_test = lrt$p.value[[4]] < alpha)
-        } else {
-            rand_result <- c(omnibus_test = NA)
-        }
+    if (!is.null(alpha) & !no_lrt & !identical(f, f_nest)) {
+        full_ml <- quiet(lme4::lmer(f, data, REML = FALSE, ...))
+        nested <- quiet(lme4::lmer(f_nest, data, REML = FALSE, ...))
+        lrt <- varTestnlme::varCompTest(full_ml, nested, pval.comp = "bounds", output = FALSE)
+        rand_result <- c(omnibus_test = lrt$p.value[[4]] < alpha)
+    } else {
+        rand_result <- c(omnibus_test = NA)
     }
 
     # Return output
