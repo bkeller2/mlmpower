@@ -51,6 +51,9 @@ generate <- function(model, n_within, n_between, ndata = 1) {
     if (ndata < 1) throw_error(
         "{.arg ndata} must be a single integer >= 1."
     )
+    if (length(model$effect_size$icc) != 1) throw_error(
+        "{.arg model} must have only one global ICC specified."
+    )
 
     # Obtain levels
     lvls <- vapply(model$predictors, levels, numeric(1L))
