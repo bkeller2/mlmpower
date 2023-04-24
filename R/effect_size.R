@@ -64,11 +64,32 @@ new_effsize <- function(type, value) {
 #' @param product  a single numeric value that corresponds to the proportion of variance explained by the product terms.
 #' @returns A list that corresponds to each R2 value.
 #' @examples
+#' # Set ICCs
 #' (
 #'     outcome('Y')
 #'     + within_predictor('X')
 #'     + effect_size(
 #'         icc = c(0.1, 0.2),
+#'         within = 0.3
+#'     )
+#' )
+#'
+#' # With cross-sectional ICC
+#' (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(
+#'         icc = cross_sectional,
+#'         within = 0.3
+#'     )
+#' )
+#'
+#' # With longitudinal ICC
+#' (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(
+#'         icc = longitudinal,
 #'         within = 0.3
 #'     )
 #' )
@@ -171,7 +192,7 @@ add.mp_effect <- function(x, y) {
 #' @param x a [`mlmpower::mp_effect`].
 #' @param ... other arguments not used by this method.
 #' @returns Invisibly returns the original variable.
-#' @export
+#' @noRd
 print.mp_effect <- function(x, ...) {
     ulid <- cli::cli_ul()
     cli::cli_li('type   = {x$type}')

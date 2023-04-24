@@ -378,10 +378,6 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
 #' @param ... other arguments passed to [`mlmpower::analyze()`].
 #' @details
 #' Specifying multiple `n_within` and `n_between` will produce a full factorial simulation design.
-#' @returns A [`list`] that with the following named elements:
-#' - `estimates`: The estimates from fitting the model.
-#' - `sig_test`: The logical if the estimates were statistically siginificant based on `alpha`.
-#' - `parameters`: The [`mlmpower::mp_parameters`] extracted from `data`.
 #' @returns A `mp_power` object that contains the results.
 #' See [`mlmpower::print.mp_power`] for more information.
 #' The object has the following slots:

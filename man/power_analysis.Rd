@@ -19,13 +19,6 @@ power_analysis(model, replications, n_within, n_between, ...)
 \item{...}{other arguments passed to \code{\link[=analyze]{analyze()}}.}
 }
 \value{
-A \code{\link{list}} that with the following named elements:
-\itemize{
-\item \code{estimates}: The estimates from fitting the model.
-\item \code{sig_test}: The logical if the estimates were statistically siginificant based on \code{alpha}.
-\item \code{parameters}: The \code{\link{mp_parameters}} extracted from \code{data}.
-}
-
 A \code{mp_power} object that contains the results.
 See \code{\link{print.mp_power}} for more information.
 The object has the following slots:

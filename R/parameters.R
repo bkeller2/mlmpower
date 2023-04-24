@@ -456,7 +456,23 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
 }
 
 #' Convert [`mlmpower::mp_parameters`] to a [`list`]
-#' @noRd
+#' @description
+#' A wrapper to coerce [`mlmpower::mp_parameters`] to a [`list`].
+#' @param x the [`mlmpower::mp_parameters`] to be coered.
+#' @param ... additional arguments passed to [`as.list`]
+#' @returns a [`list`]
+#' @examples
+#' # Specify model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(
+#'         icc = c(0.1, 0.2),
+#'         within = 0.3
+#'     )
+#' )
+#' # Obtain parameters and convert to a list
+#' model |> summary() |> as.list() -> param_list
 #' @export
 as.list.mp_parameters <- function(x, ...) {
     as.list.environment(x, ...)

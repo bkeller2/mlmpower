@@ -37,11 +37,32 @@ Returns suggested ICC's for cross-sectional studies (0.05, 0.15, and 0.25).
 Returns suggested ICC ranges for longitudinal studies (0.40, 0.50, and 0.60).
 }
 \examples{
+# Set ICCs
 (
     outcome('Y')
     + within_predictor('X')
     + effect_size(
         icc = c(0.1, 0.2),
+        within = 0.3
+    )
+)
+
+# With cross-sectional ICC
+(
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(
+        icc = cross_sectional,
+        within = 0.3
+    )
+)
+
+# With longitudinal ICC
+(
+    outcome('Y')
+    + within_predictor('X')
+    + effect_size(
+        icc = longitudinal,
         within = 0.3
     )
 )

@@ -94,14 +94,12 @@ mc_error <- function(data, func, alpha = 0.05) {
 
 
 #' Internal function for suppressing output
-#'
 #' @noRd
 quiet <- function(x) {
     invisible(suppressMessages(suppressWarnings(force(x))))
 }
 
 #' Internal function for pretty output printing of power tables
-#'
 #' @noRd
 power_table <- function(x) {
     d <- data.frame(
@@ -124,7 +122,6 @@ power_table <- function(x) {
 
 
 #' Internal function to keep online mean
-#'
 #' @noRd
 online_mean <- function(e1, e2) {
 
@@ -165,7 +162,6 @@ online_mean <- function(e1, e2) {
 }
 
 #' Internal function to take diagonal safely even if its one element
-#'
 #' @noRd
 diagonal <- function(x) {
     if (is.matrix(x)) diag(x)

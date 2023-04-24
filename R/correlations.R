@@ -6,6 +6,19 @@
 #' @param lower the lower bound of the distribution.
 #' @param upper the upper bound of the distribution.
 #' @returns A `mp_corr_func` that generates the desired correlation
+#' @examples
+#' # Create Model with random and fixed correlations
+#' (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + between_predictor('Z')
+#'     + effect_size(icc = 0.1)
+#'     # Defaults
+#'     + correlations(
+#'         within  = random(0.1, 0.3),
+#'         between = fixed(0.2)
+#'     )
+#' )
 #' @seealso [`mlmpower::correlations()`]
 #' @export
 random <- function(lower, upper) {
