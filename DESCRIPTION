@@ -5,7 +5,7 @@ Version: 0.9.1
 Authors@R: person("Brian T.", "Keller", email = "bk@utexas.edu",
   role = c("aut", "cre", "cph"))
 Description: A declarative language for conducting power analyses with multilevel models.
-License: GPL-3 + file LICENSE
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3

@@ -308,15 +308,18 @@ add.mp_predictor <- function(x, y) {
 #' Converts a `mp_variable` class into a single row `data.frame`
 #' @noRd
 variable_to_row <- function(x) {
-    as.data.frame(
-        within(c(x), {
-            icc  <- if (is.null(icc)) '' else if (is.na(icc)) 'NA' else icc
-            level <- levels(x)
-            type <- if ('mp_timevar' %in% class(x)) 'timevar'
-            else if ('mp_binary' %in% class(x)) 'binary'
-            else 'continuous'
-            if ('mp_timevar' %in% class(x)) rm(values) # Remove values
-        })
+    with(x,
+         data.frame(
+             name = name,
+             weight = weight,
+             mean = mean,
+             sd = sd,
+             icc = if (is.null(icc)) '' else if (is.na(icc)) 'NA' else icc,
+             type = if ('mp_timevar' %in% class(x)) 'timevar'
+             else if ('mp_binary' %in% class(x)) 'binary'
+             else 'continuous',
+             level = levels(x)
+         )
     )
 }
 

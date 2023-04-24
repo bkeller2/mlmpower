@@ -231,18 +231,6 @@ subset.mp_model <- function(x, icc, ...) {
     return(new_x)
 }
 
-#' Internal function to call function for a `mp_model`
-#' @noRd
-with_model <- function(model, expr, ...) {
-    if (!is.function(expr)) {
-        throw_error('Second argument must be function')
-    }
-    environment(expr) <- model
-    expr(...)
-}
-
-
-
 #' Prints a [`mlmpower::mp_model`]
 #' @description
 #' Prints a [`mlmpower::mp_variable`] in a human readable format.
