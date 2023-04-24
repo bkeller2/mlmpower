@@ -1,7 +1,7 @@
 Package: mlmpower
 Type: Package
 Title: Power Analysis and Data Simulation for Multilevel Models
-Version: 0.9.0
+Version: 0.9.1
 Authors@R: person("Brian T.", "Keller", email = "bk@utexas.edu",
   role = c("aut", "cre", "cph"))
 Description: A declarative language for conducting power analyses with multilevel models.
