@@ -4,7 +4,15 @@ Title: Power Analysis and Data Simulation for Multilevel Models
 Version: 0.9.1
 Authors@R: person("Brian T.", "Keller", email = "bk@utexas.edu",
   role = c("aut", "cre", "cph"))
-Description: A declarative language for conducting power analyses with multilevel models.
+Description:
+    A declarative language for specifying multilevel models,
+    solving for population parameters based on specified variance-explained effect
+    size measures, generating data, and conducting power analyses to determine
+    sample size recommendations. The specification allows for any number of
+    within-cluster effects, between-cluster effects, covariate effects
+    at either level, and random coefficients. Moreover, the models do not
+    assume orthogonal effects, and predictors can correlate at either level
+    and accommodate models with multiple interaction effects.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
