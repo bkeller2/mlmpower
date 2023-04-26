@@ -6,3 +6,5 @@
 ^Meta$
 ^\.github$
 ^cran-comments\.md$
+^CRAN-SUBMISSION$
+^LICENSE
