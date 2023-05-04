@@ -224,10 +224,21 @@ make_parameters <- function(model) {
         # random intercept variation due to non-zero level-1 means
         a <- t(model_mean_X) %*% (cor_is * sqrt(var_ranslopes))
         s <- t(model_mean_X) %*% tau_ranslopes %*% model_mean_X
-        tau00 <- 0.5 * (-2 * b + a^2 - 2 * s + 2 * var_Y_b) - 0.5 * sqrt(-4 * b * a^2 + a^4 - 4 * a^2 * s + 4 * a^2 * var_Y_b)
 
+        # Precompute portion of tau00
+        comp1 <- -4 * b * a^2 + a^4 - 4 * a^2 * s + 4 * a^2 * var_Y_b
+        # Check if comp1 is positive
+        if (is.na(comp1) | comp1 < 0) {
+            throw_error(c(
+                'The random intercept variance is negative.',
+                'x' = 'This is caused because the effect size specified are impossible.',
+                'i' = 'The between effect size is most likely too large compared to the ICC.',
+                '>' = 'ICC = {icc_Y} and Between R2 = {R2_increment_b}'
+            ))
+        }
+        tau00 <- 0.5 * (-2 * b + a^2 - 2 * s + 2 * var_Y_b) - 0.5 * sqrt(comp1)
         # Check if tau00 is positive
-        if (tau00 < 0) {
+        if (is.na(tau00) | tau00 < 0) {
             throw_error(c(
                 'The random intercept variance is negative.',
                 'x' = 'This is caused because the effect size specified are impossible.',
