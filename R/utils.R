@@ -8,6 +8,7 @@ is.number <- function(x) {
 #' @noRd
 rmvnorm <- function(n, mu, Sigma) {
     p <- NCOL(Sigma)
+    if (p == 0) return(matrix(0, n, 0))
     (matrix(mu, nrow = n, ncol = p, byrow = T)
         + matrix(rnorm(p * n), ncol = p)
         %*% with(
@@ -22,6 +23,7 @@ rmvnorm <- function(n, mu, Sigma) {
 #' @noRd
 rmvnorm_nomean <- function(n, Sigma) {
     p <- NCOL(Sigma)
+    if (p == 0) return(matrix(0, n, 0))
     matrix(rnorm(p * n), ncol = p) %*% with(
         eigen(Sigma, symmetric = TRUE), {
             t(vectors %*% (t(vectors) * sqrt(pmax(values, 0))))
