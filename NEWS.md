@@ -1,3 +1,7 @@
+# mlmpower 1.0.2
+
+* Update Author's email address
+
 # mlmpower 1.0.1
 
 * Improve checking for impossible parameter solutions
