@@ -589,3 +589,86 @@ print.mp_power <- function(x, ...) {
 summary.mp_power <- function(object, ...) {
     print(object)
 }
+
+
+#' Coerce a [`mlmpower::mp_power`] to a Data Frame
+#' @description
+#' Outputs [`mlmpower::mp_power`] as a data frame.
+#' @param x a [`mlmpower::mp_power`].
+#' @param row.names passed to [`base::as.data.frame`]
+#' @param optional passed to [`base::as.data.frame`]
+#' @param power logical: do you want the power or the estimates
+#' @param ... other arguments not used by this method.
+#' @returns returns a data frame
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = 0.1)
+#' )
+#' # Set seed
+#' set.seed(19723)
+#' # Create data set and analyze
+#' # Note: Generally Use more than 50 replications
+#' model |> power_analysis(50, 5, 50) -> powersim
+#' # Obtain Results as a data frame
+#' as.data.frame(powersim)
+#' @export
+as.data.frame.mp_power <- function(
+        x,
+        row.names = NULL,
+        optional = FALSE,
+        power = TRUE,
+        ... ) {
+
+    # Extract out matrix
+    val <- if (power) x$power else x$estimates
+
+    # Deal with simulations that have one conditino
+    if (!is.list(val)) {
+        val <- list(val)
+        names(val) <- paste0(
+            'icc = ',  x$sim$model$effect_size$icc,
+            'n_within = ', x$sim$n_within,
+            'n_between = ', x$sim$n_between
+        )
+    }
+
+    # Extract out matrix
+    o <- (
+        val |> lapply(\(.) {
+            nam <- rownames(.)
+            data.frame(
+                icc = NA,
+                n_within = NA,
+                n_between = NA,
+                parameter = parse_param_names(nam),
+                .,
+                row.names = NULL,
+                stringsAsFactors = TRUE
+            )
+        })
+        |> do.call(what = rbind)
+    )
+    # Obtain `icc`, `n_within`, `n_between`
+    p <- strsplit( rownames(o) , ', ')
+
+    o$icc <- (p
+        |> lapply(\(.) gsub('icc = ', '\\1', .[1]))
+        |> as.numeric()
+    )
+    o$n_within <- (p
+        |> lapply(\(.) gsub('n_within = ', '\\1', .[2]))
+        |> as.numeric()
+    )
+    o$n_between <- (p
+        |> lapply(\(.) gsub('n_between = ', '\\1', .[3]))
+        |> as.numeric()
+        |> floor()
+    )
+    # Remove rownames
+    rownames(o) <- NULL
+    # Return without row names
+    o |> as.data.frame(row.names = NULL, optional = optional, ...)
+}

@@ -1,3 +1,7 @@
+# mlmpower 1.0.3
+
+* Add `as.data.frame` method for `mp_power`
+
 # mlmpower 1.0.2
 
 * Update Author's email address

@@ -101,6 +101,19 @@ quiet <- function(x) {
     invisible(suppressMessages(suppressWarnings(force(x))))
 }
 
+#' Internal function for parsing parameter names
+#' @noRd
+parse_param_names <- function(x) {
+    vapply(strsplit(x, '.', fixed = T), \(x) {
+        if (x[1] == 'fixed') {
+            paste0('Fixed:  ', paste0(x[-1], collapse = '.'))
+        }
+        else {
+            paste0('Random: Slopes Test')
+        }
+    }, character(1L))
+}
+
 #' Internal function for pretty output printing of power tables
 #' @noRd
 power_table <- function(x) {
@@ -110,14 +123,7 @@ power_table <- function(x) {
             paste('\u00B1', formatC(x[,2], digits = 2, format = 'f'))
         )
     )
-    rownames(d) <-  vapply(strsplit(row.names(x), '.', fixed = T), \(x) {
-        if (x[1] == 'fixed') {
-            paste0('Fixed:  ', paste0(x[-1], collapse = '.'))
-        }
-        else {
-            paste0('Random: Slopes Test')
-        }
-    }, character(1L))
+    rownames(d) <- parse_param_names(row.names(x))
     print(d, right = F)
     invisible(d)
 }
