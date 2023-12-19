@@ -4,7 +4,7 @@ is.number <- function(x) {
     length(x) == 1 & is.numeric(x)
 }
 
-#' Internal helper for multivariate normal draw without means
+#' Internal helper for multivariate normal draw with means
 #' @noRd
 rmvnorm <- function(n, mu, Sigma) {
     p <- NCOL(Sigma)
