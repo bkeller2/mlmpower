@@ -330,6 +330,7 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
         replications,
         n_within,
         n_between,
+        mechanism,
         ...) {
 
     # Double check valid inputs
@@ -339,6 +340,7 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
     if (n_between < 1) throw_error(
         "{.arg n_between} must be a single integer >= 1."
     )
+    if (missing(mechanism)) mechanism <- \(data) data
 
     # Run reps and include progress bar
     results <- lapply(
@@ -351,7 +353,7 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
                 "| ETA: {cli::pb_eta}"
             )
         ), \(.) {
-            model |> generate(n_within, n_between) |> analyze(...)
+            model |> generate(n_within, n_between) |> mechanism() |> analyze(...)
         }
     )
 
@@ -401,6 +403,17 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
 #' @param ... other arguments passed to [`mlmpower::analyze()`].
 #' @details
 #' Specifying multiple `n_within` and `n_between` will produce a full factorial simulation design.
+#'
+#' Use a `mechanism` argument to pass down to the internal function that analyzes
+#' each data set. This expects a function with the [`mlmpower::mp_data`] as the input,
+#' and the function should return the modified [`mlmpower::mp_data`]. Be careful when
+#' using this because it allows you to modify the population parameters, which will
+#' be incorrect. You should only induce missing data values on variables. Missing data
+#' on the predictors will cause listwise deletion to be used, but missing data on the
+#' outcome will be appropriate for MAR-based mechanisms. See examples below for an
+#' example that generates MCAR data on the outcome. See [`mlmpower::parameters`]
+#' to obtain the population parameters from each data set.
+#'
 #' @returns A `mp_power` object that contains the results.
 #' See [`mlmpower::print.mp_power`] for more information.
 #' The object has the following slots:
@@ -420,6 +433,16 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
 #' # Create data set and analyze
 #' # Note: Generally Use more than 50 replications
 #' model |> power_analysis(50, 5, 50)
+#'
+#' # Induce Missing data on outcome
+#' set.seed(19723)
+#' model |> power_analysis(50, 5, 50, mechanism = \(data) {
+#'     # `data` will be the `mp_data` used
+#'     within(data, {
+#'         # MCAR Process
+#'         Y <- ifelse(runif(NROW(data)) < 0.5, Y, NA)
+#'     })
+#' }) -> powersim_mcar
 #' @export
 power_analysis <- function(
         model,
