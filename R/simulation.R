@@ -223,6 +223,29 @@ is.mp_data <- function(x) {
     inherits(x, 'mp_data')
 }
 
+#' Obtain [`mlmpower::mp_parameters`] from [`mlmpower::mp_data`]
+#' @description
+#' Obtains the list of population parameters from a generated data set
+#' @param data a [`mlmpower::mp_data`].
+#' @returns A [`mlmpower::mp_parameters`] object
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = 0.1)
+#' )
+#' # Set seed
+#' set.seed(198723)
+#' # Create data set and obtain population parameters
+#' model |> generate(5, 50) |> parameters()
+#' @export
+parameters <- function(data) {
+    if (!is.mp_data(data)) throw_error(
+        "{.arg data} must be of a {.cli mp_data} object."
+    )
+    data |> attr('parameters')
+}
 
 #' Analyzes a single [`mlmpower::mp_data`] using [`lme4::lmer`]
 #' @description
@@ -272,8 +295,8 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
     e <- centering_env(data$`_id`)
 
     # Get formulas for model
-    attr(data, 'parameters') |> to_formula(e) -> f
-    attr(data, 'parameters') |> to_formula(e, nested = T) -> f_nest
+    parameters(data) |> to_formula(e) -> f
+    parameters(data) |> to_formula(e, nested = T) -> f_nest
 
     # Fit Model with lme4 and return results
     full_reml <- quiet(lmerTest::lmer(f, data, ...))
@@ -295,7 +318,7 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
             fixed  = coefficients(summary(full_reml))[,'Pr(>|t|)'] < alpha,
             random = rand_result
         ),
-        parameters =  attr(data, 'parameters')
+        parameters = parameters(data)
     )
 }
 
