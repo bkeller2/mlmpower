@@ -44,7 +44,8 @@ be incorrect. You should only induce missing data values on variables. Missing d
 on the predictors will cause listwise deletion to be used, but missing data on the
 outcome will be appropriate for MAR-based mechanisms. See examples below for an
 example that generates MCAR data on the outcome. See \code{\link{parameters}}
-to obtain the population parameters from each data set.
+to obtain the population parameters from each data set. See \code{\link{mechanisms}}
+for predefined missing data mechanisms for the outcome and examples using them.
 }
 \examples{
 # Create Model

@@ -1,3 +1,10 @@
+# mlmpower 1.0.4
+
+* Add `parameters` function for to obtain `mp_parameters` from a `mp_data`
+* Add `mechanism` argument to be accessible from `power_analysis`
+* See `?mechanism` for additional details
+* Improve documentation
+
 # mlmpower 1.0.3
 
 * Add `as.data.frame` method for `mp_power`

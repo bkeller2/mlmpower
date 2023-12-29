@@ -412,7 +412,8 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
 #' on the predictors will cause listwise deletion to be used, but missing data on the
 #' outcome will be appropriate for MAR-based mechanisms. See examples below for an
 #' example that generates MCAR data on the outcome. See [`mlmpower::parameters`]
-#' to obtain the population parameters from each data set.
+#' to obtain the population parameters from each data set. See [`mlmpower::mechanisms`]
+#' for predefined missing data mechanisms for the outcome and examples using them.
 #'
 #' @returns A `mp_power` object that contains the results.
 #' See [`mlmpower::print.mp_power`] for more information.
