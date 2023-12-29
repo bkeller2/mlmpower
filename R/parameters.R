@@ -1,9 +1,20 @@
-#' @rdname Parameters
-#' @title `mlmpower` Modeling Framework
-#' @name Parameters
-#' @aliases mp_parameters parameters
-#' @description Test
-# TODO finish this documentation
+#' @rdname mp_parameters
+#' @title `mp_parameters` Object for `mlmpower`
+#' @name mp_parameters
+#' @seealso
+#' [mlmpower::parameters]
+#' @description
+#' An S3 class that contains an [`base::environment`] with the following objects:
+#' - `r2`: The population proportion of variance explained
+#' - `phi_b`: The population predictor covariance matrix for between
+#' - `phi_p`: The population within cluster covariance matrix for products
+#' - `phi_w`: The population predictor covariance matrix for within
+#' - `mean_Z`: The population mean for level-2 predictors
+#' - `mean_X`: The population mean for level-1 predictors
+#' - `var_e`: The population within residual variance
+#' - `tau`: The population level-2 covariance matrix
+#' - `gammas`: The regression coefficients
+#' - `mean_Y`: The population mean of the outcome
 NULL
 
 #' Internal function to convert `mp_model` object to an environment
