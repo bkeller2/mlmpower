@@ -5,7 +5,7 @@
 \alias{mp_data}
 \title{Generates Data Sets Based on a \code{\link{mp_model}}}
 \usage{
-generate(model, n_within, n_between, ndata = 1)
+generate(model, n_within, n_between, ndata = 1, mechanism = NULL)
 }
 \arguments{
 \item{model}{a \code{\link{mp_model}}.}
@@ -15,6 +15,8 @@ generate(model, n_within, n_between, ndata = 1)
 \item{n_between}{a single positive integer of the desired between cluster observations.}
 
 \item{ndata}{a single positive integer of the number of desired data sets.}
+
+\item{mechanism}{a function for inducing missing data to the data set. If NULL it is ignored. See details below.}
 }
 \value{
 For \code{ndata = 1} a single \code{\link{data.frame}} is returned.
@@ -30,6 +32,18 @@ solved parameters as an attribute to the \code{\link{data.frame}}.
 }
 \details{
 Note that there must only be one global ICC in \code{\link{mp_model}}.
+
+Use the \code{mechanism} argument to specify  missing data mechanisms. See \code{\link{mechanisms}}
+for predefined missing data mechanisms for the outcome and examples using them.
+When creating custom mechanisms care needs to be taken because it is considered for
+advanced usage. This a argument expects a function with the \code{\link{mp_data}} as the input,
+and the function should return the modified \code{\link{mp_data}}. Be careful when
+using this because it allows you to modify the population parameters, which will
+be incorrect. You should only induce missing data values on variables. Missing data
+on the predictors will cause listwise deletion to be used, but missing data on the
+outcome will be appropriate for MAR-based mechanisms. See examples below for an
+example that generates MCAR data on the outcome. See \code{\link{parameters}}
+to obtain the population parameters from each data set.
 }
 \examples{
 # Create Model
@@ -42,4 +56,17 @@ model <- (
 set.seed(198723)
 # Create data set
 model |> generate(5, 50) -> mydata
+
+# Induce missing data with custom function
+model |> generate(50, 5, mechanism = MCAR(0.25)) -> mydata_mcar
+
+# Induce missing data with custom function
+model |> generate(50, 5, mechanism = \(data) {
+    # `data` will be the `mp_data` used
+    within(data, {
+        # MCAR Process
+        Y <- ifelse(runif(NROW(data)) < 0.5, Y, NA)
+    })
+}) -> mydata_mcar_custom
+
 }

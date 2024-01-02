@@ -8,8 +8,21 @@
 #' @param n_within a single positive integer of the desired within cluster observations.
 #' @param n_between a single positive integer of the desired between cluster observations.
 #' @param ndata a single positive integer of the number of desired data sets.
+#' @param mechanism a function for inducing missing data to the data set. If NULL it is ignored. See details below.
 #' @details
 #' Note that there must only be one global ICC in [`mlmpower::mp_model`].
+#'
+#' Use the `mechanism` argument to specify  missing data mechanisms. See [`mlmpower::mechanisms`]
+#' for predefined missing data mechanisms for the outcome and examples using them.
+#' When creating custom mechanisms care needs to be taken because it is considered for
+#' advanced usage. This a argument expects a function with the [`mlmpower::mp_data`] as the input,
+#' and the function should return the modified [`mlmpower::mp_data`]. Be careful when
+#' using this because it allows you to modify the population parameters, which will
+#' be incorrect. You should only induce missing data values on variables. Missing data
+#' on the predictors will cause listwise deletion to be used, but missing data on the
+#' outcome will be appropriate for MAR-based mechanisms. See examples below for an
+#' example that generates MCAR data on the outcome. See [`mlmpower::parameters`]
+#' to obtain the population parameters from each data set.
 #' @returns
 #' For `ndata = 1` a single [`data.frame`] is returned.
 #' The first variable is the cluster identifier labeled `_id`.
@@ -27,8 +40,21 @@
 #' set.seed(198723)
 #' # Create data set
 #' model |> generate(5, 50) -> mydata
+#'
+#' # Induce missing data with custom function
+#' model |> generate(50, 5, mechanism = MCAR(0.25)) -> mydata_mcar
+#'
+#' # Induce missing data with custom function
+#' model |> generate(50, 5, mechanism = \(data) {
+#'     # `data` will be the `mp_data` used
+#'     within(data, {
+#'         # MCAR Process
+#'         Y <- ifelse(runif(NROW(data)) < 0.5, Y, NA)
+#'     })
+#' }) -> mydata_mcar_custom
+#'
 #' @export
-generate <- function(model, n_within, n_between, ndata = 1) {
+generate <- function(model, n_within, n_between, ndata = 1, mechanism = NULL) {
 
     # Validate Inputs
     model |> is_valid()
@@ -53,6 +79,9 @@ generate <- function(model, n_within, n_between, ndata = 1) {
     )
     if (length(model$effect_size$icc) != 1) throw_error(
         "{.arg model} must have only one global ICC specified."
+    )
+    if (!is.null(mechanism) && !is.function(mechanism)) throw_error(
+        "{.arg mechanism} must either be NULL or a function."
     )
 
     # Obtain levels
@@ -82,7 +111,7 @@ generate <- function(model, n_within, n_between, ndata = 1) {
     if (ndata > 1) {
         return(
             lapply(seq_len(ndata), \(.) {
-                model |> generate(n_within, n_between, ndata = 1)
+                model |> generate(n_within, n_between, ndata = 1, mechanism)
             })
         )
     }
@@ -211,10 +240,17 @@ generate <- function(model, n_within, n_between, ndata = 1) {
     attr(d, 'parameters') <- p
 
     # Return data
-    structure(
-        d,
-        class = c('mp_data', 'data.frame')
-    )
+    if (is.null(mechanism)) {
+        structure(
+            d,
+            class = c('mp_data', 'data.frame')
+        )
+    } else {
+        structure(
+            d,
+            class = c('mp_data', 'data.frame')
+        ) |> mechanism()
+    }
 }
 
 #' Check if it is a  list
@@ -291,18 +327,15 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
         "{.arg no_lrt} must be a single logical value"
     )
 
-    # Make centering env
-    e <- centering_env(data$`_id`)
-
     # Get formulas for model
-    parameters(data) |> to_formula(e) -> f
-    parameters(data) |> to_formula(e, nested = T) -> f_nest
+    data |> to_formula() -> f
+    data |> to_formula(nested = TRUE) -> f_nest
 
     # Fit Model with lme4 and return results
     full_reml <- quiet(lmerTest::lmer(f, data, ...))
 
     # Obtain LRT
-    if (!is.null(alpha) & !no_lrt & !identical(f, f_nest)) {
+    if (!is.null(alpha) & !no_lrt & !(f == f_nest)) {
         full_ml <- quiet(lme4::lmer(f, data, REML = FALSE, ...))
         nested <- quiet(lme4::lmer(f_nest, data, REML = FALSE, ...))
         lrt <- varTestnlme::varCompTest(full_ml, nested, pval.comp = "bounds", output = FALSE)
@@ -330,7 +363,8 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
         replications,
         n_within,
         n_between,
-        mechanism,
+        mechanism = NULL,
+        analyze = mlmpower::analyze,
         ...) {
 
     # Double check valid inputs
@@ -340,7 +374,6 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
     if (n_between < 1) throw_error(
         "{.arg n_between} must be a single integer >= 1."
     )
-    if (missing(mechanism)) mechanism <- \(data) data
 
     # Run reps and include progress bar
     results <- lapply(
@@ -353,7 +386,7 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
                 "| ETA: {cli::pb_eta}"
             )
         ), \(.) {
-            model |> generate(n_within, n_between) |> mechanism() |> analyze(...)
+            model |> generate(n_within, n_between, 1, mechanism) |> analyze(...)
         }
     )
 
@@ -404,16 +437,13 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
 #' @details
 #' Specifying multiple `n_within` and `n_between` will produce a full factorial simulation design.
 #'
-#' Use a `mechanism` argument to pass down to the internal function that analyzes
-#' each data set. This expects a function with the [`mlmpower::mp_data`] as the input,
-#' and the function should return the modified [`mlmpower::mp_data`]. Be careful when
-#' using this because it allows you to modify the population parameters, which will
-#' be incorrect. You should only induce missing data values on variables. Missing data
-#' on the predictors will cause listwise deletion to be used, but missing data on the
-#' outcome will be appropriate for MAR-based mechanisms. See examples below for an
-#' example that generates MCAR data on the outcome. See [`mlmpower::parameters`]
-#' to obtain the population parameters from each data set. See [`mlmpower::mechanisms`]
-#' for predefined missing data mechanisms for the outcome and examples using them.
+#' Specify a `mechanism` argument to pass down to the [`mlmpower::generate`] function.
+#' See the details of [`mlmpower::generate`] for more information about specifying missing data mechanisms.
+#' See [`mlmpower::mechanisms`] for predefined missing data mechanisms.
+#'
+#' Specify an `analyze` argument to use custom analysis functions. These functions should map onto
+#' [`mlmpower::analyze`]'s structure, but can allow for things like specifying multiple imputations etc.
+#' This is considered an advance usage that requires extreme care and caution.
 #'
 #' @returns A `mp_power` object that contains the results.
 #' See [`mlmpower::print.mp_power`] for more information.
@@ -422,6 +452,8 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
 #' - `power`: The power power results per condition.
 #' - `estimates`: The simulation summaries of the parameter estimates per condition.
 #' - `mean_parameters`: The average population parameter per condition.
+#' @seealso [generate()]
+#' @seealso [mechanisms]
 #' @examples
 #' # Create Model
 #' model <- (
@@ -435,15 +467,10 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
 #' # Note: Generally Use more than 50 replications
 #' model |> power_analysis(50, 5, 50)
 #'
-#' # Induce Missing data on outcome
+#' # Induce missing data on outcome with built in mechanisms
 #' set.seed(19723)
-#' model |> power_analysis(50, 5, 50, mechanism = \(data) {
-#'     # `data` will be the `mp_data` used
-#'     within(data, {
-#'         # MCAR Process
-#'         Y <- ifelse(runif(NROW(data)) < 0.5, Y, NA)
-#'     })
-#' }) -> powersim_mcar
+#' model |> power_analysis(50, 5, 50, mechanism = MCAR(0.25)) -> powersim_mcar
+#'
 #' @export
 power_analysis <- function(
         model,
@@ -579,9 +606,9 @@ print.mp_power <- function(x, ...) {
     cli::cli_text('')
     # Handle only one icc case
     if (is.null(names(x$power))) {
-        cli::cli_text(deparse(to_formula(x$mean_parameters)))
+        cli::cli_text(deparse(`_to_formula`(x$mean_parameters)))
     } else {
-        cli::cli_text(deparse(to_formula(x$mean_parameters[[1]])))
+        cli::cli_text(deparse(`_to_formula`(x$mean_parameters[[1]])))
     }
     cli::cli_text('')
     cli::cli_alert_info('cwc() = centering within cluster')

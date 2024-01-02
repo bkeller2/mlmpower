@@ -2,6 +2,7 @@
 % Please edit documentation in R/mechanisms.R
 \name{mechanisms}
 \alias{mechanisms}
+\alias{mechanism}
 \alias{MCAR}
 \alias{MAR}
 \title{Helper functions for producing Missing Data Mechanisms}

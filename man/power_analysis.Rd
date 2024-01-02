@@ -36,16 +36,13 @@ based on a constructed \code{\link{mp_model}}.
 \details{
 Specifying multiple \code{n_within} and \code{n_between} will produce a full factorial simulation design.
 
-Use a \code{mechanism} argument to pass down to the internal function that analyzes
-each data set. This expects a function with the \code{\link{mp_data}} as the input,
-and the function should return the modified \code{\link{mp_data}}. Be careful when
-using this because it allows you to modify the population parameters, which will
-be incorrect. You should only induce missing data values on variables. Missing data
-on the predictors will cause listwise deletion to be used, but missing data on the
-outcome will be appropriate for MAR-based mechanisms. See examples below for an
-example that generates MCAR data on the outcome. See \code{\link{parameters}}
-to obtain the population parameters from each data set. See \code{\link{mechanisms}}
-for predefined missing data mechanisms for the outcome and examples using them.
+Specify a \code{mechanism} argument to pass down to the \code{\link{generate}} function.
+See the details of \code{\link{generate}} for more information about specifying missing data mechanisms.
+See \code{\link{mechanisms}} for predefined missing data mechanisms.
+
+Specify an \code{analyze} argument to use custom analysis functions. These functions should map onto
+\code{\link{analyze}}'s structure, but can allow for things like specifying multiple imputations etc.
+This is considered an advance usage that requires extreme care and caution.
 }
 \examples{
 # Create Model
@@ -60,13 +57,13 @@ set.seed(19723)
 # Note: Generally Use more than 50 replications
 model |> power_analysis(50, 5, 50)
 
-# Induce Missing data on outcome
+# Induce missing data on outcome with built in mechanisms
 set.seed(19723)
-model |> power_analysis(50, 5, 50, mechanism = \(data) {
-    # `data` will be the `mp_data` used
-    within(data, {
-        # MCAR Process
-        Y <- ifelse(runif(NROW(data)) < 0.5, Y, NA)
-    })
-}) -> powersim_mcar
+model |> power_analysis(50, 5, 50, mechanism = MCAR(0.25)) -> powersim_mcar
+
+}
+\seealso{
+\code{\link[=generate]{generate()}}
+
+\link{mechanisms}
 }

@@ -415,9 +415,9 @@ is.parameters <- function(x) {
     inherits(x, "mp_parameters")
 }
 
-#' Convert `mp_parameters` object to a formula for `lme4`
+#' Internal function ti convert `mp_parameters` object to a formula for `lme4`
 #' @noRd
-to_formula <- function(x, e = globalenv(), nested = FALSE) {
+`_to_formula` <- function(x, e = globalenv(), nested = FALSE) {
 
     # Get regression coefficients
     gammas <- if (is.null(attr(x, '_gammas'))) x$gammas else attr(x, '_gammas')
@@ -480,6 +480,48 @@ to_formula <- function(x, e = globalenv(), nested = FALSE) {
     }
     lme4_model <- paste0(names(x$mean_Y), " ~ ", model_fixed, " + ", model_random)
     return(as.formula(lme4_model, e))
+}
+
+#' Convert [`mlmpower::mp_data`] to a [`stats::formula`] to be used for [`lme4::lmer`]
+#' @description
+#' Produces the formula including the centering functions based on a data set generated with [`mlmpower::generate`].
+#' @param data the [`mlmpower::mp_data`] to be coerced.
+#' @param nested logical value, if true then produce the nested restricted model
+#' @returns a [`stats::formula`]
+#' @examples
+#' # Specify model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(
+#'         icc = 0.2,
+#'         within = 0.3
+#'     )
+#' )
+#' # Set seed
+#' set.seed(198723)
+#' # Create formula based on data set
+#' model |> generate(5, 50) |> to_formula()
+#' @export
+to_formula <- function(data, nested = FALSE) {
+
+    if (!is.mp_data(data)) throw_error(
+        '{.arg data} must be of a {.cli mp_data} object.'
+    )
+    # Check id name
+    if (is.null(data$`_id`)) throw_error(
+        '{.arg data} must have `_id` as the first variable.'
+    )
+    # Check nested
+    if (!is.logical(nested) & length(nested) == 1) throw_error(
+        "{.arg nested} must be a single logical value"
+    )
+
+    # Get centering environment
+    data$`_id` |> centering_env() -> e
+
+    # Return formulas for model
+    parameters(data) |> `_to_formula`(e, nested = nested)
 }
 
 #' Convert [`mlmpower::mp_parameters`] to a [`list`]
