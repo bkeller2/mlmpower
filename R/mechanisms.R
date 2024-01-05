@@ -81,7 +81,7 @@ MAR <- function(mis.rate, cause, r2, lower = TRUE) {
         if (!(cause %in% names(data))) throw_error(
            c(x = 'The variable "{cause}" is not in the data set.')
         )
-        p <- parameters(data)
+        p <- data |> attr('parameters')
         if (length(which(cause %in% names(p$mean_X))) != 0) {
             ind <- which(cause %in% names(p$mean_X))
             mu <- p$mean_X[ind]

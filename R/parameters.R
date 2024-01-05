@@ -521,7 +521,7 @@ to_formula <- function(data, nested = FALSE) {
     data$`_id` |> centering_env() -> e
 
     # Return formulas for model
-    parameters(data) |> `_to_formula`(e, nested = nested)
+    data |> attr('parameters')  |> `_to_formula`(e, nested = nested)
 }
 
 #' Convert [`mlmpower::mp_parameters`] to a [`list`]
@@ -593,5 +593,62 @@ average <- function(e1, e2) {
         )
     }
     return(e1)
+}
+
+
+#' @title Obtain [`mlmpower::mp_parameters`] from objects
+#' @description
+#' A generic function to obtain [`mlmpower::mp_parameters`] from defined models and data sets.
+#' @param object an object which the [`mlmpower::mp_parameters`] are desired.
+#' @returns A [`mlmpower::mp_parameters`] object
+#' @details
+#' Currently object can be:
+#' - [`mlmpower::mp_model`]
+#' - [`mlmpower::mp_data`]
+#' - [`mlmpower::mp_power`]
+#'
+#' If using on a  [`mlmpower::mp_model`] and the  model has random correlations
+#' then the average is used.
+#' @export
+parameters <- function(object) {
+    UseMethod('parameters')
+}
+
+#' @rdname parameters
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = 0.1)
+#' )
+#'
+#' # Create data set and obtain population parameters
+#' model |> parameters()
+#' @export
+parameters.mp_model <- function(object) {
+    object |> summary()
+}
+
+#' @rdname parameters
+#' @examples
+#' # Set seed
+#' set.seed(198723)
+#' # Create data set and obtain population parameters
+#' model |> generate(5, 50) |> parameters()
+#' @export
+parameters.mp_data <- function(object) {
+    object |> attr('parameters') |> clean_parameters()
+}
+
+#' @rdname parameters
+#' @export
+#' @examples
+#' # Set seed
+#' set.seed(198723)
+#' # Create data set and obtain population parameters
+#' model |> power_analysis(50, 5, 50) |> parameters()
+parameters.mp_power <- function(object) {
+    object$mean_parameters
 }
 

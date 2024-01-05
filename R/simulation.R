@@ -259,30 +259,6 @@ is.mp_data <- function(x) {
     inherits(x, 'mp_data')
 }
 
-#' Obtain [`mlmpower::mp_parameters`] from [`mlmpower::mp_data`]
-#' @description
-#' Obtains the list of population parameters from a generated data set
-#' @param data a [`mlmpower::mp_data`].
-#' @returns A [`mlmpower::mp_parameters`] object
-#' @examples
-#' # Create Model
-#' model <- (
-#'     outcome('Y')
-#'     + within_predictor('X')
-#'     + effect_size(icc = 0.1)
-#' )
-#' # Set seed
-#' set.seed(198723)
-#' # Create data set and obtain population parameters
-#' model |> generate(5, 50) |> parameters()
-#' @export
-parameters <- function(data) {
-    if (!is.mp_data(data)) throw_error(
-        "{.arg data} must be of a {.cli mp_data} object."
-    )
-    data |> attr('parameters')
-}
-
 #' Analyzes a single [`mlmpower::mp_data`] using [`lme4::lmer`]
 #' @description
 #' Analyzes a single [`mlmpower::mp_data`] based on the data generating model.
