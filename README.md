@@ -18,7 +18,7 @@ remotes::install_github('bkeller2/mlmpower', build_vignettes = TRUE)
 
 ## Using the Package
 
-A guide to using the package is provided through the vignette.
+A guide to using the package is provided through the [vignette](https://cran.r-project.org/web/packages/mlmpower/vignettes/mlmpower.html).
 
 The following command will open the vignette:
 ```r
