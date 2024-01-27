@@ -311,7 +311,7 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
     full_reml <- quiet(lmerTest::lmer(f, data, ...))
 
     # Obtain LRT
-    if (!is.null(alpha) & !no_lrt & !(f == f_nest)) {
+    if (!is.null(alpha) & !no_lrt & !identical(as.character(f), as.character(f_nest))) {
         full_ml <- quiet(lme4::lmer(f, data, REML = FALSE, ...))
         nested <- quiet(lme4::lmer(f_nest, data, REML = FALSE, ...))
         lrt <- varTestnlme::varCompTest(full_ml, nested, pval.comp = "bounds", output = FALSE)
