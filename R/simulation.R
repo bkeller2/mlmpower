@@ -392,7 +392,7 @@ analyze <- function(data, alpha = 0.05, no_lrt = FALSE, ...) {
                 sampling_sd = apply(e, 1, sd),
                 mc_moe = mc_error(e, rowMeans)
             ),
-            mean_parameters = p |> clean_parameters()
+            mean_parameters = p
         ),
         class = c('mp_power', 'mp_base')
     )
