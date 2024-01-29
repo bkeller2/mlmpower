@@ -1,3 +1,9 @@
+# mlmpower 1.0.5
+
+* Fix bug likelihood ratio tests not being performed with `power_analysis()`
+* Fix bug with formula not correctly being displayed with `mp_power`
+* Update cached results for vignette
+
 # mlmpower 1.0.4
 
 * Add `parameters` function for to obtain `mp_parameters` from objects
