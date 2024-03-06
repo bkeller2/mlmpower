@@ -132,8 +132,7 @@ generate <- function(model, n_within, n_between, ndata = 1, mechanism = NULL) {
     l2 <- length(p$mean_Z)
 
     # Generate ID variable
-    `_id` <- seq_len(n_between) %x% matrix(1, n_within)
-
+    `_id` <- rep(seq_len(n_between), each = n_within)
 
     # Generate X predictors
 
