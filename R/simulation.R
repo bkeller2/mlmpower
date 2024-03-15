@@ -258,6 +258,158 @@ is.mp_data <- function(x) {
     inherits(x, 'mp_data')
 }
 
+#' Center a data set based on a [`mlmpower::mp_data`]
+#' @description
+#' Provides multilevel centering of a [`mlmpower::mp_data`] data set.
+#' @param data a [`mlmpower::mp_data`] or a [`list`] of [`mlmpower::mp_data`].
+#' @param all a logical value to center all variables based on model defaults
+#' @param ... see details below
+#' @details
+#' The `...` needs to be the variable's name followed by equals and the centering
+#' strategy requested. There are three different strategies available:
+#' * `cwc`  = centering within cluster
+#' * `cgm`  = centering with group mean
+#' * `none` = no centering
+#'
+#' If `all` is set to `TRUE` then the default centering will be used unless
+#' overwritten by specifying a specific centering strategy.
+#' @returns
+#' For `ndata = 1` a single [`data.frame`] is returned.
+#' If a list of data sets are included then they will be contained in a [`list`].
+#' Each [`data.frame`] has an additional `center` attribute which denotes
+#' the centering strategy used.
+#' @examples
+#' # Create Model
+#' model <- (
+#'     outcome('Y')
+#'     + within_predictor('X')
+#'     + effect_size(icc = 0.1)
+#' )
+#' # Set seed
+#' set.seed(198723)
+#'
+#' # Create data set with default centering
+#' model |> generate(5, 50) |> center(all = TRUE) -> mydata
+#'
+#' # Create data centering X with cwc
+#' model |> generate(5, 50) |> center(X = cwc) -> mydata
+#'
+#' # See centering strategy
+#' attr(mydata, 'center')
+#' @export
+center <- function(data, all = FALSE, ...) {
+
+    # Check Inputs
+    if (!is.mp_data(data)) {
+        # If list apply center to list
+        if (is.list(data)) return(lapply(data, \(x) center(x, all, ...)))
+
+        # Otherwise error
+        throw_error("{.arg data} must be of a {.cli mp_data} object.")
+    }
+
+    # Obtain list of passed inputs
+    l <- match.call(expand.dots = FALSE)$`...`
+
+    # Set up vector to store centering type
+    centv <- rep(NA, NCOL(data))
+    names(centv) <- names(data)
+
+    # Center variables
+    for(i in seq_along(l)){
+        # Obtain name and check if in data
+        vname <- names(l)[i]
+        if (!(vname %in% names(data))) throw_error(c(
+            "x" = "{vname} is not in the data set."
+        ))
+        # Check if ID variable
+        if (vname == '_id') throw_error(c(
+            "x" = "Cannot center {vname} because it is an identifer variable."
+        ))
+        # Obtain function call
+        func <- as.character(l[[i]])
+        if (!(func %in% c('cwc', 'cgm', 'none'))) throw_error(
+            c(
+                "x" = "Unrecognized centering: `{func}`",
+                "i" = "You must specify `{.cli cgm}`, `{.cli cwc}`, or `{.cli none}`"
+            )
+        )
+        centv[vname] <- func
+    }
+
+    # Default centering
+    if (all) {
+        p <- attr(data, 'parameters')
+        gammas <- if (is.null(attr(p, '_gammas'))) p$gammas else attr(p, '_gammas')
+        tau    <- if (is.null(attr(p, '_tau')))    p$tau    else attr(p, '_tau')
+
+        # Obtain number of l1 and l2
+        n_l1 <- NROW(p$mean_X)
+        n_l2 <- NROW(p$mean_Z)
+
+        # L1 Centering
+        var_l1 <- ifelse(
+            gammas[seq_len(n_l1) + 1] == gammas[seq_len(n_l1) + (1 + n_l1 + n_l1 * n_l2)],
+            'cgm', 'cwc'
+        )
+        names(var_l1) <- names(p$mean_X)
+
+        # Don't center timevars
+        if (!is.null(p$timevar_l1)) {
+            var_l1 <- var_l1[!p$timevar_l1]
+        }
+
+        # L2 centering
+        var_l2 <- rep('cgm', length(p$mean_Z))
+
+        # Update `centv` for l1
+        for (i in seq_along(var_l1)) {
+            # Obtain name and check if in data
+            vname <- names(var_l1)[i]
+            func  <- var_l1[i]
+
+            # Check if it is missing
+            if (is.na(centv[vname])) centv[vname] <- func
+        }
+
+        # Update `centv` for l2
+        for (i in seq_along(var_l2)) {
+            # Obtain name
+            vname <- names(var_l2)[i]
+            func  <- var_l2[i]
+
+            # Check if it is missing
+            if (is.na(centv[vname])) centv[vname] <- func
+        }
+    }
+
+
+    # Get centering environment
+    data$`_id` |> centering_env() -> e
+
+    # Center
+    for (i in seq_along(centv)) {
+        vname <- names(centv)[i]
+        func  <- centv[i]
+        # Handle no centering
+        if (is.na(func) || func == 'none') {
+            centv[vname] <- 'none'
+        } else {
+            data[,vname] <- do.call(func, list(data[,vname]), envir = e)
+        }
+    }
+
+    # Remove parameters attribute
+    attr(data, 'parameters') <- NULL
+
+    # Add centering attribute
+    attr(data, 'center') <- centv
+
+    # Return data
+    as.data.frame(data)
+}
+
+
 #' Analyzes a single [`mlmpower::mp_data`] using [`lme4::lmer`]
 #' @description
 #' Analyzes a single [`mlmpower::mp_data`] based on the data generating model.

@@ -47,6 +47,12 @@ make_variable <- function(type, name, weight, mean, sd, icc) {
             'x' = 'Variable names cannot be `_id`'
         ))
     }
+    if (name == 'all') {
+        throw_error(c(
+            'Invalid variable name ({name}).',
+            'x' = 'Variable names cannot be `all`'
+        ))
+    }
     if (grepl('\\(|\\)', name, perl = T)) {
         throw_error(c(
             'Invalid variable name ({name}).',

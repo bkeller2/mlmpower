@@ -16,7 +16,7 @@ Description:
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 URL: https://github.com/bkeller2/mlmpower
 BugReports: https://github.com/bkeller2/mlmpower/issues
 Roxygen: list(markdown = TRUE)

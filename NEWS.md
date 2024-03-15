@@ -1,3 +1,7 @@
+# mlmpower 1.0.6
+
+* Added `center()` function to center data created with `generate()`
+
 # mlmpower 1.0.5
 
 * Fix bug likelihood ratio tests not being performed with `power_analysis()`
