@@ -39,7 +39,7 @@
 #'
 #' For more detailed information see the help vignette by running the following:
 #' ```
-#' vignette(package = 'mlmpower')
+#' vignette('mlmpower')
 #' ```
 NULL
 

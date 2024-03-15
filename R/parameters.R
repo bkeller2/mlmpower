@@ -415,7 +415,7 @@ is.parameters <- function(x) {
     inherits(x, "mp_parameters")
 }
 
-#' Internal function ti convert `mp_parameters` object to a formula for `lme4`
+#' Internal function to convert `mp_parameters` object to a formula for `lme4`
 #' @noRd
 `_to_formula` <- function(x, e = globalenv(), nested = FALSE) {
 
@@ -429,6 +429,7 @@ is.parameters <- function(x) {
 
     # Determine which predictors are CGM
     # NOTE Assumes always same regression coefficient means cgm
+    # Changes need to change `center()` as well.
     cgm_sel <- gammas[seq_len(n_l1) + 1] == gammas[seq_len(n_l1) + (1 + n_l1 + n_l1 * n_l2)]
 
     # Variable names
