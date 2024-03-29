@@ -1,3 +1,7 @@
+# mlmpower 1.0.7
+
+* Fixed bug with `center()` function and list of data sets
+
 # mlmpower 1.0.6
 
 * Added `center()` function to center data created with `generate()`

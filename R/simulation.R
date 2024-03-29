@@ -299,17 +299,21 @@ is.mp_data <- function(x) {
 #' @export
 center <- function(data, all = FALSE, ...) {
 
+    # Obtain list of passed inputs
+    l <- match.call(expand.dots = FALSE)$`...`
+
     # Check Inputs
     if (!is.mp_data(data)) {
         # If list apply center to list
-        if (is.list(data)) return(lapply(data, \(x) center(x, all, ...)))
+        if (is.list(data)) {
+            return(lapply(data, \(x) {
+                do.call(center, c(list(data = x, all = all), l))
+            }))
+        }
 
         # Otherwise error
         throw_error("{.arg data} must be of a {.cli mp_data} object.")
     }
-
-    # Obtain list of passed inputs
-    l <- match.call(expand.dots = FALSE)$`...`
 
     # Set up vector to store centering type
     centv <- rep(NA, NCOL(data))
