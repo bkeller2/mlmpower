@@ -24,13 +24,18 @@ is.base <- function(x) {
     # Check if one is missing
     if (missing(e1)) return(e2)
     if (missing(e2)) return(e1)
+
     # Don't allow two models
     if (is.model(e1) & is.model(e2)) {
-        throw_error('Cannot add two model sets together.')
+        throw_error(c('x' = 'Cannot add two models together.'))
     }
-    # Check if second is models class or outcome
-    if (is.model(e2)) return(e2 |> add(e1))
 
-    # Otherwise check if one is a list
+    # Check if first is a model class
+    if (is.model(e1)) return(e1 |> clone() |> add(e2))
+
+    # Check if second is model class
+    if (is.model(e2)) return(e2 |> clone() |> add(e1))
+
+    # Otherwise perform add and return
     e1 |> add(e2)
 }
