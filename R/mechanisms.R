@@ -82,13 +82,13 @@ MAR <- function(mis.rate, cause, r2, lower = TRUE) {
            c(x = 'The variable "{cause}" is not in the data set.')
         )
         p <- data |> attr('parameters')
-        if (length(which(cause %in% names(p$mean_X))) != 0) {
-            ind <- which(cause %in% names(p$mean_X))
+        if (length(which(names(p$mean_X) %in% cause)) != 0) {
+            ind <- which(names(p$mean_X) %in% cause)
             mu <- p$mean_X[ind]
             s <- sqrt((p$phi_w[ind,ind] + p$phi_b[ind,ind]))
         }
-        else if (length(which(cause %in% names(p$mean_Z))) != 0) {
-            ind <- which(cause %in% names(p$mean_Z))
+        else if (length(which(names(p$mean_Z) %in% cause)) != 0) {
+            ind <- which(names(p$mean_Z) %in% cause)
             mu <- p$mean_Z[ind]
             s <- sqrt(p$phi_b[ind + length(p$mean_X), ind + length(p$mean_X)])
         }
