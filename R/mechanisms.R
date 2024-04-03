@@ -97,7 +97,7 @@ MAR <- function(mis.rate, cause, r2, lower = TRUE) {
         )
         val <- (data[,cause] - mu) / s
         phi <- sqrt(r2) / sqrt(1 - r2)
-        M.star <- val*phi + rnorm(length(cause))
+        M.star <- val*phi + rnorm(NROW(data))
         M <- M.star < qnorm(mis.rate, sd = sqrt(phi^2 + 1), lower.tail = lower)
         if (!lower) M <- !M
         data[M, 2] <- NA
