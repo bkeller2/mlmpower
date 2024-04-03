@@ -131,7 +131,7 @@ example1 <- (
 ```
 
 The `mlmpower` package groups $R^{2}$ values and intraclass correlations
-into a single object called effect_size(), with the five inputs
+into a single object called `effect_size()`, with the five inputs
 separated by commas. The within argument corresponds to $R_{w}^{2}$, the
 between argument aligns with $R_{b}^{2}$, the product argument specifies
 $R_{p}^{2}$, and the random_slope argument corresponds to $R_{rc}^{2}$.
@@ -558,7 +558,7 @@ example3 <- (
 ```
 
 The `mlmpower` package groups $R^{2}$ values and intraclass correlations
-into a single object called effect_size(), with three inputs separated
+into a single object called `effect_size()`, with three inputs separated
 by commas. The within argument corresponds to $R_{w}^{2}$, the between
 argument aligns with $R_{b}^{2}$, and the icc argument assigns a global
 intraclass correlation to all level-1 variables. Separate simulations
