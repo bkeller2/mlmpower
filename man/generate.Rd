@@ -54,10 +54,11 @@ model <- (
 )
 # Set seed
 set.seed(198723)
+
 # Create data set
 model |> generate(5, 50) -> mydata
 
-# Induce missing data with custom function
+# Induce missing data with built-in function
 model |> generate(50, 5, mechanism = MCAR(0.25)) -> mydata_mcar
 
 # Induce missing data with custom function

@@ -1,3 +1,7 @@
+# mlmpower 1.0.8
+
+* Fixed bug where adding to a model would affect older copies of the model
+
 # mlmpower 1.0.7
 
 * Fixed bug with `center()` function and list of data sets
