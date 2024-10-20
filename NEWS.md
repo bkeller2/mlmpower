@@ -1,3 +1,7 @@
+# mlmpower 1.0.9
+
+* Fixed bug with non-centered time variables producing wrong values.
+
 # mlmpower 1.0.8
 
 * Fixed bug where adding to a model would affect older copies of the model

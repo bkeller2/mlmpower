@@ -233,7 +233,7 @@ make_parameters <- function(model) {
         # explained level-2 variation
         b <- t(gamma_b) %*% phi_b %*% gamma_b
         # random intercept variation due to non-zero level-1 means
-        a <- t(model_mean_X) %*% (cor_is * sqrt(var_ranslopes))
+        a <- 2 * t(model_mean_X) %*% (cor_is * sqrt(var_ranslopes))
         s <- t(model_mean_X) %*% tau_ranslopes %*% model_mean_X
 
         # Precompute portion of tau00
@@ -283,6 +283,9 @@ make_parameters <- function(model) {
             }, character(1L))
         }))
 
+        # Compute intercept / slope covariance portion
+        iscov <-  2 * t(model_mean_X) %*% tau[-1, 1] + t(model_mean_X) %*% tau[-1, -1] %*% model_mean_X
+
         # collect parameters and construct names
         params_coeff <- matrix(c(gammas), ncol = 1)
         params_res <- matrix(c(var_e_w), ncol = 1)
@@ -296,10 +299,9 @@ make_parameters <- function(model) {
 
         # R-square summary
         check_var_Y <- (
-            t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*%
-                phi_b %*% gamma_b + sum(diagonal(tau[-1, -1, drop = F] %*% phi_XX_w))
-            + t(model_mean_X) %*% tau_ranslopes %*% model_mean_X + t(model_mean_X) %*%
-                tau[-1, 1, drop = F] + tau00 + var_e_w
+            t(gamma_w) %*% phi_w %*% gamma_w + t(gamma_b) %*% phi_b %*% gamma_b
+            + sum(diagonal(tau[-1, -1, drop = F] %*% phi_XX_w))
+            + iscov + tau00 + var_e_w
         )
         # check_var_Y_w <- (
         #     t(gamma_w) %*% phi_w %*% gamma_w
@@ -321,7 +323,7 @@ make_parameters <- function(model) {
             R2check_increment_b <- R2check_XZ_b
         }
         R2check_totalminusincrement_b <- R2check_XZ_b - R2check_increment_b
-        R2check_ranicept <- tau00 / check_var_Y
+        R2check_ranicept <- (tau00 + iscov) / check_var_Y
 
         # Collect r2 summaries
         r2  <- matrix(
