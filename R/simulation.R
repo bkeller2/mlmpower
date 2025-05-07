@@ -196,11 +196,11 @@ generate <- function(model, n_within, n_between, ndata = 1, mechanism = NULL) {
     }
 
     # Create all interactions
-    inter <- do.call('cbind', apply(
+    inter <- if (l1 == 0) numeric(0) else apply(
         X_w, 2,
         \(.). * X_b[, seq_len(l2) + l1, drop = F],
         simplify = F
-    ))
+    ) |> do.call(cbind, args = _)
 
     # Create predictors matrix
     X <- cbind(1, X_w, inter, X_b)

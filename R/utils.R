@@ -73,7 +73,7 @@ extract_results <- function(x, ddf = 'Satterthwaite') {
 
     # Return parameters
     list(
-        fixed = reg_coef[, 1],
+        fixed = reg_coef[, 1, drop = FALSE],
         random = c(vars, covs),
         within_variance = sigma(x)^2
     )
@@ -84,6 +84,7 @@ extract_results <- function(x, ddf = 'Satterthwaite') {
 #' @noRd
 jack_se <- function(data, func) {
     jack <- vapply(seq_len(NCOL(data)), \(i) func(data[,-i, drop = F]), numeric(NROW(data)))
+    if (dim(jack) |> is.null()) dim(jack) <- c(1, length(jack))
     v <- ((NCOL(jack) -1) / NCOL(jack)) * rowSums((jack - rowMeans(jack))^2)
     sqrt(v)
 }
