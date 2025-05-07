@@ -1,3 +1,8 @@
+# mlmpower 1.0.10
+
+* Fixed crash when no level-1 predictors are included.
+* Fixed crash when no predictors are included.
+
 # mlmpower 1.0.9
 
 * Fixed bug with non-centered time variables producing wrong values.
