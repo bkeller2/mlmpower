@@ -1,3 +1,7 @@
+# mlmpower 1.0.11
+
+* Fixed crash when specifying outcome ICC
+
 # mlmpower 1.0.10
 
 * Fixed crash when no level-1 predictors are included.
