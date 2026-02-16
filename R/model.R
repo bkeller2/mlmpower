@@ -166,7 +166,7 @@ is_valid <- function(x) {
     }
 
     # Check if r2 between is too large based on icc
-    for (icc in (if (is.null(x$outcome$icc)) es$icc else outcome$icc)) {
+    for (icc in (if (is.null(x$outcome$icc)) es$icc else x$outcome$icc)) {
         if (es$between >= icc) throw_error(c(
             'The {.cls model} object is not properly constructed.',
             'x' = 'The between effect size is greater or equal to the ICC'
